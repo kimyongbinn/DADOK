@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.AttendanceMapper">
+	<select id="shTotalAtt" resultType="int">
+		Select Count(*) From attendance
+	</select>
+	
+	<select id="shEventList" parameterType="Attendance" resultType="Attendance">
+		<![CDATA[
+		SELECT * 
+		FROM (SELECT ROWNUM rn, a.* 
+		      FROM (SELECT a_num, a_title a_title, a_sdate, a_edate, a_image, 1 event_type,
+		                    CASE WHEN sysdate BETWEEN TO_DATE(a_sdate, 'YYYY-MM-DD') 
+		                                      AND     TO_DATE(a_edate || ' 23:59:59', 'YYYY-MM-DD HH24:MI:SS') THEN 1
+		                         WHEN sysdate < TO_DATE(a_sdate, 'YYYY-MM-DD')  THEN 2
+		                         ELSE 3 END as event_status
+		            FROM attendance
+		            UNION
+		            SELECT q_num, q_title a_title, q_sdate, q_edate, q_image, 2 event_type,
+		                    CASE WHEN sysdate BETWEEN TO_DATE(q_sdate, 'YYYY-MM-DD') 
+		                                      AND     TO_DATE(q_edate || ' 23:59:59', 'YYYY-MM-DD HH24:MI:SS') THEN 1
+		                         WHEN sysdate < TO_DATE(q_sdate, 'YYYY-MM-DD')  THEN 2
+		                         ELSE 3 END as event_status
+		            FROM quiz
+		            ORDER BY event_status
+		            )a
+		       ) 
+		WHERE 	rn >= #{start}
+		AND		rn <= #{end}
+		]]>
+	</select>
+	
+	<select id="shDivideAttNum" parameterType="int" resultType="int">
+		Select a_num From attendance Where a_num=#{eNum}
+	</select>
+	
+	<select id="shAttendance" parameterType="int" resultType="Attendance">
+		Select * From attendance Where a_num=#{eNum}
+	</select>
+	
+	<select id="shStartMonth" parameterType="int" resultType="int">
+		Select substr(a_sdate,6,2) From attendance Where a_num=#{eNum}
+	</select>
+	
+	<select id="shStartYear" parameterType="int" resultType="int">
+		Select substr(a_sdate,1,4) From attendance Where a_num=#{eNum}
+	</select>
+	
+	<insert id="shCreateAtt" parameterType="attendance">
+		Insert into attendance Values (event_num_seq.nextval, #{a_title}, #{a_sdate},#{a_edate},#{a_image},#{a_point},#{a_add},#{a_addpoint})
+	</insert>
+	
+	<select id="shBoEventList" parameterType="Attendance" resultType="Attendance">
+	<![CDATA[
+		SELECT *
+		FROM
+		(
+		     SELECT rownum rn, a.* 
+		     FROM
+		      (
+		          SELECT a_title, a_num, a_sdate, a_edate, a_point, a_add, 1 event_type, 
+		                 CASE WHEN sysdate BETWEEN TO_DATE(a_sdate, 'YYYY-MM-DD') 
+		                                      AND     TO_DATE(a_edate || ' 23:59:59', 'YYYY-MM-DD HH24:MI:SS') THEN 1
+		                      WHEN sysdate < TO_DATE(a_sdate, 'YYYY-MM-DD')  THEN 2
+		                      ELSE 3 END as event_status
+		          FROM attendance
+		          UNION
+		          SELECT q_title, q_num, q_sdate, q_edate, q_point, NULL AS a_add, 2 event_type, 
+		                 CASE WHEN sysdate BETWEEN TO_DATE(q_sdate, 'YYYY-MM-DD') 
+		                                      AND     TO_DATE(q_edate || ' 23:59:59', 'YYYY-MM-DD HH24:MI:SS') THEN 1
+		                      WHEN sysdate < TO_DATE(q_sdate, 'YYYY-MM-DD')  THEN 2
+		                      ELSE 3 END as event_status
+		          FROM Quiz
+		          ORDER BY a_sdate DESC
+		      )a
+		      ORDER BY a_edate DESC
+		      )
+		WHERE 	rn >= #{start}
+		AND		rn <= #{end}
+		ORDER BY rn ASC
+	]]>
+	</select>
+	
+	<update id="shUpdateAttendance" parameterType="Attendance">
+		Update Attendance
+		Set 
+		a_title = #{a_title},
+		a_sdate = #{a_sdate},
+		a_edate = #{a_edate},
+		a_image = #{a_image},
+		a_point = #{a_point},
+		a_add   = #{a_add},
+		a_addpoint = #{a_addpoint}
+		Where a_num = #{a_num}
+	</update>
+	
+	<select id="shCheckAddAtt" parameterType="int" resultType="int">
+		Select a_add
+		From attendance
+		Where a_num = #{a_num}
+	</select>
+	
+	
+	<select id="shBoSearchEvent" parameterType="Attendance" resultType="Attendance">
+		<![CDATA[
+		Select rownum rn, a.* 
+		From
+		 (
+		 Select a_title, a_num, a_sdate, a_edate, a_point, a_add
+		 From attendance
+		 Union
+		 Select q_title, q_num, q_sdate, q_edate, q_point, null As a_add
+		 From Quiz
+		 Order by a_num
+		 ) a
+        Where a.a_num Like '%#{a_num}%'
+         and
+         a.a_title Like '%#{a_title}%'
+		Order by rn DESC
+		
+        ]]>
+	</select>
+	
+	<delete id="shDeleteAtt" parameterType="int">
+		Delete From Attendance Where a_num=#{a_num} 
+	</delete>
+	
+	<select id="shSearchDetail11" parameterType="Attendance" resultType="Attendance">
+		<![CDATA[
+		Select *
+		From
+		(
+		 Select rownum rn, a.* 
+		 From
+		  (
+		  Select a_title, a_num, a_sdate, a_edate, a_point, a_add
+		  From attendance
+		  Union
+		  Select q_title, q_num, q_sdate, q_edate, q_point, null As a_add
+		  From Quiz
+		  Order by a_num desc
+		  )a)
+		Where rn >= #{start}
+		And   rn <= #{end}
+		Order by rn asc	
+		]]>
+	</select>
+	
+	<select id="shSearchDetail12" parameterType="Attendance" resultType="Attendance">
+		<![CDATA[
+		Select *
+		From
+		(
+		 Select rownum rn, a.* 
+		 From
+		  (
+		  Select a_title, a_num, a_sdate, a_edate, a_point, a_add
+		  From attendance
+		  Union
+		  Select q_title, q_num, q_sdate, q_edate, q_point, null As a_add
+		  From Quiz
+		  Order by a_num desc
+		  )a
+         Where sysdate > a_sdate
+         And   sysdate < a_edate
+        )
+        Where rn >= #{start}
+		And   rn <= #{end}
+		Order by rn asc	
+		]]>
+	</select>
+	
+	<select id="shSearchDetail13" parameterType="Attendance" resultType="Attendance">
+		<![CDATA[
+		Select *
+		From
+		(
+		 Select rownum rn, a.* 
+		 From
+		  (
+		  Select a_title, a_num, a_sdate, a_edate, a_point, a_add
+		  From attendance
+		  Union
+		  Select q_title, q_num, q_sdate, q_edate, q_point, null As a_add
+		  From quiz
+		  Order by a_num desc
+		  )a
+         Where sysdate > a_edate
+        )
+		Where rn >= #{start}
+		And   rn <= #{end}
+		Order by rn asc	
+		]]>
+	</select>
+</mapper>

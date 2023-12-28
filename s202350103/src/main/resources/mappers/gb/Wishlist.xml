@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.WishlistMapper">
+	<select id="gbselectWishStatus" parameterType="WishList" resultType="int">
+		SELECT w_wish FROM wishlist WHERE m_num = #{m_num} AND nb_num = #{nb_num}
+	</select>
+	
+	<insert id="gbInsertUpdateWish" parameterType="WishList">
+		MERGE INTO wishlist
+		USING DUAL
+		ON (m_num = #{m_num} AND nb_num = #{nb_num})
+		WHEN MATCHED THEN
+		UPDATE SET w_wish = CASE WHEN w_wish = 0 THEN 1
+		                         WHEN w_wish = 1 THEN 0
+		                         END
+		WHEN NOT MATCHED THEN
+		INSERT(m_num, nb_num, w_wish)
+		VALUES(#{m_num}, #{nb_num}, 1)
+	</insert>
+
+</mapper>

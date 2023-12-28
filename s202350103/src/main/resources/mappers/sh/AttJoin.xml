@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.AttJoinMapper">
+
+	<select id="shAttJoinList" parameterType="AttJoin" resultType="AttJoin">
+		Select * From att_join Where m_num = #{m_num} And a_num = #{a_num}
+	</select>
+	
+	<select id="shSubDate" parameterType="AttJoin" resultType="int" >
+		Select substr(a_par_pdate,7,2) day from att_join Where a_num = #{a_num} and m_num = #{m_num} Group by substr(a_par_pdate, 7, 2)
+	</select>
+	
+	<insert id="shStampAtt" parameterType="AttJoin">
+		Insert into att_join Values (#{m_num},#{a_num},sysdate)
+	</insert>
+	
+	<update id="shSaveAttPoint" parameterType="AttJoin">
+		Update member Set m_point = m_point + (Select a_point From attendance Where a_num = #{a_num}) Where m_num=#{m_num} 
+	</update>
+	
+	<select id="shSearchAtt" parameterType="AttJoin" resultType="AttJoin">
+		Select * From att_join
+    	Where a_num = #{a_num} And m_num = #{m_num}
+    	And To_char(a_par_pdate, 'yyMMdd') = To_char(SYSDATE, 'yyMMdd')
+	</select>
+	
+	<insert id="shAttPointList" parameterType="AttJoin">
+	Insert into point_list(p_num, a_num, m_num, a_par_pdate, p_list_type, m_point) 
+	Values (pointlist_p_num_seq.nextval, #{a_num}, #{m_num}, sysdate, 2, 
+		   (select a_point from attendance Where a_num = #{a_num}))
+	</insert> 
+	
+	<select id="shCheckAttChance" parameterType="AttJoin" resultType="int">
+		Select count(*) a From att_join
+    	Where a_num = #{a_num} And m_num = #{m_num}
+    	And To_char(a_par_pdate, 'yyMMdd') = To_char(SYSDATE, 'yyMMdd')
+	</select>
+	
+	<select id="shAddAtt" parameterType="AttJoin" resultType="int">
+		<![CDATA[
+		Select 
+	    (Select count(*)
+	     From att_join
+	     Where m_num = #{a_num}
+	     And a_num = #{m_num}
+	     And to_date(a_par_pdate, 'yy-MM-dd') = trunc(sysdate)
+	     And rownum <= 1) +
+	    
+	    (Select count(*)
+	     From att_join
+	     Where m_num = #{a_num}
+	     And a_num = #{m_num}
+	     And to_date(a_par_pdate, 'yy-MM-dd') = trunc(sysdate) - 1
+	     And rownum <= 1) +
+	    
+	    (Select count(*)
+	     From att_join
+	     Where m_num = #{a_num}
+	     And a_num = #{m_num}
+	     And to_date(a_par_pdate, 'yy-MM-dd') = trunc(sysdate) - 2
+	     And rownum <= 1) 
+	     As total_count
+		From dual
+		]]>
+	</select>
+	
+	<insert id="shStampAddAtt" parameterType="AttJoin">
+		Insert Into att_join Values (#{m_num},#{a_num},To_char(sysdate, 'yy-MM-dd'))
+	</insert>
+	
+	<update id="shSaveAddAtt" parameterType="AttJoin">
+		<![CDATA[
+		Update member 
+		Set m_point = m_point+(Select a_addpoint From attendance Where a_num=#{a_num}) 
+		Where m_num = #{m_num}
+		]]>
+	</update>
+	
+	<insert id="shSearchAddAtt" parameterType="AttJoin">
+		Insert into point_list(p_num, m_num, a_num, a_par_pdate,p_list_type,m_point) 
+		Values (pointlist_p_num_seq.nextval, #{m_num}, #{a_num},to_char(sysdate,'yy-MM-dd'),2,
+			   (Select a_addPoint From attendance Where a_num=#{a_num}))
+	</insert>
+	
+	<select id="shCountAttRow" parameterType="AttJoin" resultType="int">
+		Select count(*) From att_join Where m_num=#{m_num} And a_num=#{a_num} And To_char(a_par_pdate, 'yy-MM-dd') = To_char(#{a_par_pdate}, 'yy-MM-dd')
+	</select>
+</mapper>

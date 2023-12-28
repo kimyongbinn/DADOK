@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.NewBookOldBookMapper">
+
+	<select id="gbSelectSameOldBookList" parameterType="int" resultType="NewBookOldBook">
+		SELECT ob.ob_num, nb.nb_image, CONCAT(ob_grade_alpha(ob.ob_grade), nb.nb_title) nb_title, 
+				nb.nb_writer, nb.nb_publisher, TO_CHAR(nb_publi_date, 'YYYY-MM-DD') nb_publi_date , ob.ob_sell_price
+		FROM newbook nb, oldbook ob
+		WHERE nb.nb_num = ob.nb_num
+		AND nb.nb_num = #{nb_num}
+		AND ob.ob_status = 3
+	</select>
+
+</mapper> 

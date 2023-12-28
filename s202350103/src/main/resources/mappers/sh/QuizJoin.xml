@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.QuizJoinMapper">
+	<select id="shQuizJoinList" parameterType="int" resultType="QuizJoin">
+		Select * From quiz_join Where m_num = #{m_num}
+	</select>
+	
+	<select id="shQuizChance" parameterType="QuizJoin" resultType="int">
+		Select count(*) a From quiz_join Where q_num=#{q_num} and m_num=#{m_num}
+	</select>
+	
+	<insert id="shQuizAnswer" parameterType="QuizJoin">
+		Insert Into quiz_join Values (#{m_num},#{q_num},sysdate)
+	</insert>
+	
+	<update id="shQuizPoint"  parameterType="QuizJoin">
+		Update member Set m_point = m_point + (Select q_point From quiz Where q_num=#{q_num}) Where m_num = #{m_num}
+	</update>
+	
+	<select id="shSearchQuiz" parameterType="QuizJoin" resultType="QuizJoin">
+		Select * From quiz_join Where q_num = #{q_num} and m_num=#{m_num}
+		and to_char(q_par_pdate,'yyMMdd') = to_char(sysdate,'yyMMdd')
+	</select>
+	
+	<insert id="shQuizPointList" parameterType="QuizJoin">
+		Insert into point_list(p_num, m_num, q_num, a_par_pdate, p_list_type, m_point)
+		Values (POINTLIST_P_NUM_SEQ.nextval, #{m_num}, #{q_num}, #{q_par_pdate}, 3, 
+			   (Select q_point From quiz Where q_num = #{q_num}))
+	</insert>
+</mapper>

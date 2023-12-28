@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.OrderrMapper">
+
+<!-- BO 주문목록
+	 boOrderList.jsp -->
+	<select id="hrCountOrderrList" resultType="int">
+		SELECT count(*) FROM orderr
+	</select>
+	
+	<select id="hrSelectOrderrList" parameterType="Orderr" resultType="Orderr">
+		SELECT *
+		FROM (SELECT rownum rn, a.*
+			  FROM (SELECT o.*, m.m_name, order_nb_title(o.o_order_num) nb_title
+			  		, (SELECT COUNT(nb_num)
+                 	   FROM order_detail od
+                 	   WHERE o.o_order_num = od.o_order_num) o_book_count
+                    FROM   orderr o, member m
+                    WHERE  o.m_num = m.m_num(+)
+                    ORDER BY o.o_order_date DESC
+                    ) a
+			  )
+		WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+	
+<!-- BO 주문상세
+	 boOrderDetail.jsp -->
+	 <select id="hrSelectOrder" parameterType="long" resultType="Orderr">
+		SELECT o.*, m.m_name, m.m_id, m.m_ph, order_nb_title(o.o_order_num) nb_title, order_nb_price(o.o_order_num) o_order_price
+			   , (SELECT SUM(o_de_count)
+			  	  FROM order_detail od
+			  	  WHERE o.o_order_num = od.o_order_num) o_order_count
+			   , (SELECT COUNT(nb_num)
+                  FROM order_detail od
+			  	  WHERE o.o_order_num = od.o_order_num) o_book_count
+		FROM   orderr o, member m
+		WHERE  o.m_num = m.m_num(+)
+		AND    o_order_num = #{o_order_num}
+	 </select>
+	 
+	 <!-- 취소처리 (1 -> 5) -->
+	 <update id="hrStatusCancellation" parameterType="long">
+	 	UPDATE orderr
+	 	SET    o_status = 5
+	 	WHERE  o_order_num = #{o_order_num}
+	 </update>
+	 
+	 <insert id="hrInsertCancellation" parameterType="long">
+	 	INSERT INTO order_cancel
+	 	VALUES (#{o_order_num}, CONCAT('C',#{o_order_num}), sysdate)
+	 </insert>
+	 
+	 <!-- 배송완료 (2 -> 3) -->
+	 <update id="hrStatusDelivered" parameterType="long">
+	 	UPDATE orderr
+	 	SET    o_status = 3
+	 	WHERE  o_order_num = #{o_order_num}
+	 </update>
+	 
+	 <!-- 구매확정 (3 -> 4) -->
+	 <update id="hrStatusConfirmation" parameterType="long">
+	 	UPDATE orderr
+	 	SET    o_status = 4
+	 	WHERE  o_order_num = #{o_order_num}
+	 </update>
+	 
+	 <!-- 발송처리 (1 -> 2) -->
+	 <update id="hrStatusShipping" parameterType="Orderr">
+	 	UPDATE orderr
+	 	SET	   o_status = 2, o_deliv_com = #{o_deliv_com}, o_deliv_track = #{o_deliv_track}
+	 	WHERE  o_order_num = #{o_order_num}
+	 </update>
+	 
+	 <!-- 교환처리 (3 -> 6) -->
+	 <update id="hrStatusExchange" parameterType="Orderr">
+	 	UPDATE orderr
+	 	SET    o_status = 6
+	 	WHERE  o_order_num = #{o_order_num}
+	 </update>
+	 
+	 <insert id="hrInsertExchange" parameterType="Orderr">
+	 	INSERT INTO order_exch
+	 	VALUES (#{o_order_num}, CONCAT('EX',#{o_order_num}), sysdate, #{o_ex_deli}, #{o_ex_track})
+	 </insert>
+	 
+	 <!-- 반품처리 (3 -> 7) -->
+	 <update id="hrStatusReturn" parameterType="Orderr">
+	 	UPDATE orderr
+	 	SET    o_status = 7
+	 	WHERE  o_order_num = #{o_order_num}
+	 </update>
+	 
+	 <insert id="hrInsertReturn" parameterType="Orderr">
+	 	INSERT INTO order_return
+	 	VALUES (#{o_order_num}, CONCAT('RE',#{o_order_num}), sysdate, #{o_re_deli}, #{o_re_track})
+	 </insert>
+	 
+	 <!-- 상품목록 -->
+	 <select id="hrSelectOrderProduct" parameterType="long" resultType="OrderDetail">
+		SELECT nb.nb_title, nb.nb_price, od.o_de_count, od.o_de_prodtype
+		FROM   newbook nb, order_detail od
+		WHERE  nb.nb_num = od.nb_num
+		AND    od.o_order_num = #{o_order_num}
+		
+		UNION
+		
+		SELECT nb.nb_title, nb.nb_price, od.o_de_count, od.o_de_prodtype
+		FROM   newbook nb, order_detail od
+		WHERE  nb.nb_num = (SELECT ob.nb_num
+		                    FROM   oldbook ob
+		                    WHERE  od.nb_num = ob.ob_num)
+		AND    od.o_order_num = #{o_order_num}
+	 </select>
+	 
+<!-- 주문번호 생성 -->
+	 <select id="hrSelectTodayOrderr" resultType="long">
+        SELECT NVL(MAX(o_order_num), 0)
+	 	FROM   orderr
+	 	WHERE  SUBSTR(o_order_num, 1, 8) = TO_CHAR(SYSDATE, 'YYYYMMDD')
+	 </select>
+	 
+<!-- FO 선물하기 - 액션
+	 foGivingGiftAction.jsp -->
+	 <insert id="hrInsertOrderrG" parameterType="Orderr">
+	 	INSERT INTO orderr
+	 	VALUES(#{o_order_num}, #{m_num}, sysdate, 0, 2,
+	 		   #{o_pay_price}, #{o_pay_type}, 0, #{o_deliv_price}, #{o_point},
+	 		   #{o_rec_name}, #{o_rec_mail}, #{o_rec_ph}, '선물 수락 대기 중', '선물 수락 대기 중', null, null)
+	 </insert>
+	 <insert id="hrInsertOrderDetailG" parameterType="Orderr">
+	 	INSERT INTO order_detail
+	 	VALUES(#{o_order_num}, #{nb_num}, #{o_de_count}, 1)
+	 </insert>
+	 <insert id="hrInsertOrderGift" parameterType="OrderGift">
+	 	INSERT INTO order_gift
+	 	VALUES(#{o_order_num}, 'G' || #{o_order_num},
+	 		   #{o_gift_card}, #{o_gift_msg}, 0)
+	 </insert>
+	 <update id="hrUpdateOrderrG" parameterType="Ka">
+	 	UPDATE orderr
+		<choose>
+			<when test="payment_method_type == 'MONEY'">
+				  SET o_status = 1
+ 			</when>
+			<when test="payment_method_type == 'CARD'">
+				  SET o_status = 1,
+				  	  o_card_num = #{card_info.approved_id}
+ 			</when>
+        </choose>
+	 	WHERE o_order_num = #{partner_order_id}
+	 </update>
+	 <update id="hrUpdateMemberP" parameterType="Ka">
+	 	UPDATE member
+		SET m_point = m_point + ROUND(#{amount.total} * 0.01) - #{amount.point}
+		WHERE m_num = #{partner_user_id}
+	 </update>
+	 <insert id="hrInsertPointListG1" parameterType="Ka">
+	 	INSERT INTO point_list
+	 	VALUES(POINTLIST_P_NUM_SEQ.nextval, #{partner_order_id}, #{partner_user_id}, null, null, sysdate, 1, ROUND(#{amount.total} * 0.01))
+	 </insert>
+	 <insert id="hrInsertPointListG2" parameterType="Ka">
+	 	INSERT INTO point_list
+	 	VALUES(POINTLIST_P_NUM_SEQ.nextval, #{partner_order_id}, #{partner_user_id}, null, null, sysdate, 6, (-1) * #{amount.point})
+	 </insert>
+	 
+<!-- FO 선물받기 - 화면
+	 foGettingGift.jsp -->
+	 <select id="hrSelectOrderrGiftType" parameterType="long" resultType="Orderr">
+	 	SELECT o.o_order_num, o.o_rec_name, o.o_rec_mail, o.o_rec_ph
+               , m.m_name, m.m_ph
+               , nb.nb_image, nb.nb_title, od.o_de_count
+	 	FROM   orderr o, member m, newbook nb, order_detail od
+	 	WHERE  o.o_order_num = #{o_order_num}
+        AND    o.m_num = m.m_num
+        AND    od.nb_num = nb.nb_num
+        AND    o.o_order_num = od.o_order_num
+	 </select>
+	 
+	 <select id="hrSelectOrderGift" parameterType="long" resultType="OrderGift">
+	 	SELECT *
+	 	FROM   order_gift
+	 	WHERE  o_order_num = #{o_order_num}
+	 </select>
+	 
+<!-- FO 선물받기 - 액션
+	 foGettingGiftAction.jsp -->
+	 <update id="hrUpdateOrderrGiftType" parameterType="Orderr">
+	 	UPDATE orderr
+		SET    o_rec_name = #{o_rec_name}, o_rec_mail = #{o_rec_mail}
+			   , o_rec_ph = #{o_rec_ph}, o_rec_addr = #{o_rec_addr}, o_rec_msg = #{o_rec_msg}
+		WHERE  o_order_num = #{o_order_num}
+	 </update>
+	 <update id="hrUpdateOrderGift" parameterType="OrderGift">
+	 	UPDATE order_gift
+		SET    o_gift_accept = 1
+		WHERE  o_order_num = #{o_order_num}
+	 </update>
+	 
+<!-- BO 주문목록 - 임의 주문 생성 액션(CSV 파일 업로드)
+	 boOrderUploadAction.jsp -->
+	 <insert id="hrInsertOrderrU" parameterType="Orderr">
+	 	INSERT INTO orderr
+	 	VALUES (#{o_order_num}, #{m_num}, sysdate, 0, 3,
+	 		   #{o_pay_price}, 3, null, #{o_deliv_price}, 0,
+	 		   #{o_rec_name}, #{o_rec_mail}, #{o_rec_ph}, #{o_rec_addr}, #{o_rec_msg},
+	 		   null, null)
+	 </insert>
+	 <insert id="hrInsertOrderDetailU" parameterType="Orderr">
+	 	INSERT INTO order_detail
+	 	VALUES (#{o_order_num}, #{nb_num}, #{o_de_count}, #{o_de_prodtype})
+	 </insert>
+</mapper>

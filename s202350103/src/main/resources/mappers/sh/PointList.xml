@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.PointListMapper">
+	<select id="shSelectMemberPoint" parameterType="Member" resultType="PointList">
+		<![CDATA[
+		Select *
+		From
+		(
+	 	 Select rownum rn, a.* 
+		 From 
+			 (Select * 
+			 From point_list
+			 Where m_num = #{m_num}
+			 Order By p_num) 
+		 a)
+		Where rn >= #{start}
+		And rn <= #{end}  
+		Order by rn desc
+		]]>
+	</select>
+	
+	<select id="shMemberPointList" parameterType="int" resultType="int">
+		Select count(*) From point_list Where m_num=#{m_num}
+	</select>
+	
+	<select id="shPointSum" parameterType="int" resultType="int">
+		Select sum(m_point) as point 
+		From point_list 
+		Where m_num=#{m_num}
+	</select>
+	
+	<update id="shBoUpdatePlusPoint" parameterType="Member">
+		Update member
+		Set    m_point = m_point +#{m_point}
+		Where  m_num = #{m_num}
+	</update>
+	
+	<insert id="shBoInsertPlusPoint" parameterType="Member">
+		Insert into point_list(p_num, m_num, a_par_pdate, p_list_type, m_point)
+		Values (pointlist_p_num_seq.nextval,#{m_num},sysdate,7,#{m_point})
+	</insert>
+	
+	<insert id="shBoInsertMinusPoint" parameterType="Member">
+		Insert into point_list(p_num, m_num, a_par_pdate, p_list_type, m_point)
+		Values (pointlist_p_num_seq.nextval,#{m_num},sysdate,7,-#{m_point})
+	</insert>
+	
+	<update id="shBoUpdateMinusPoint" parameterType="Member">
+		Update member
+		Set    m_point = m_point-#{m_point}
+		Where  m_num = #{m_num}
+	</update>
+	
+	<select id="shJoinedList" parameterType="int" resultType="int">
+		Select count(rn)
+		From (
+		 Select rownum rn,a.*
+		 From
+		 (
+		  Select*
+		  From point_list 
+		  Where a_num = #{eNum}
+		  Or q_num = #{eNum}
+		 ) a)
+		 Order by rn desc	
+	</select>
+	
+		<select id="shBoJoinedMember" parameterType="Attendance" resultType="PointList">
+			<![CDATA[
+			Select *
+			From (
+			 Select rownum rn, a.*
+			 From
+			 (
+			  Select p_num, m_num, a_num, q_num, a_par_pdate, p_list_type, m_point 
+			  From point_list 
+			  Where a_num = #{a_num} 
+			  Or q_num = #{a_num}
+			 ) a)
+			 Where rn >= #{start}
+			 And rn <= #{end}  
+			 Order by rn asc
+			 ]]>
+		</select>
+	
+	<select id="shJoinedCount" parameterType="int" resultType="int">
+		Select count(*) 
+		From 
+		(
+			Select count(*) 
+			From point_list 
+			Where a_num =#{eNum} 
+			Or q_num=#{eNum}
+			Group by m_num
+		)
+	</select>
+	
+	<select id="boMemberSelect" parameterType="PointList" resultType="PointList">
+		Select *
+		From (
+		 Select rownum rn, a.*
+		 From
+		 (
+		  Select p_num, m_num, a_num, q_num, a_par_pdate, p_list_type, m_point 
+		  From point_list 
+		  Where a_num = #{eNum}
+		  Or q_num = #{eNum}
+		 ) a
+          Where m_num = #{m_num}
+         )
+		 Order by rn desc
+	</select>
+	
+	<select id="shJoinedCountSelect" parameterType="int" resultType="int">
+		SELECT count(*)
+        From
+         (
+         Select * 
+		 From 
+		   (
+		    Select *
+			From point_list 
+			Where a_num =#{eNum}
+			Or q_num=#{eNum}
+		   )
+          Where m_num = #{m_num}
+         )
+	</select>
+	
+</mapper>

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+	<mapper namespace="com.choongang.s202350103.MemberMapper">
+		
+		<select id="ybUserLogin" parameterType="Member" resultType="Member">
+			SELECT * from member where m_id = #{m_id} and m_pw = #{m_pw} and m_wd = 0
+		</select>
+		
+		<select id="ybTotalCart" parameterType="Member" resultType="int">
+			SELECT count(*) FROM cart  WHERE m_num = #{m_num}
+		</select>
+		
+		<select id="ybTotalWishList" parameterType="Member" resultType="int">
+		  	SELECT sum(w_wish) 
+			FROM 	wishlist  
+			WHERE 	m_num = #{m_num}
+			AND 	w_wish = 1
+			
+		</select>
+		
+		<select id="ybTotalSellCnt" parameterType="Member" resultType="int">
+			SELECT count(*) FROM oldbook WHERE m_num = #{m_num}
+		</select>
+		
+		<select id="ybPointListCnt" parameterType="PointList" resultType="int">
+			SELECT count(*) 
+			FROM Point_List 
+			WHERE m_num = #{m_num}	
+		</select>
+		
+		<select id="ybTotalPoint" parameterType="int" resultType="int">
+			SELECT m_point
+			FROM   member
+			WHERE  m_num = #{m_num}
+		</select>
+		
+		<select id="ybTotalPrice" parameterType="cart" resultType="int">
+			SELECT sum(c.c_count * n.nb_price) totalPrice 
+			FROM   cart c, newbook n
+			WHERE  c.nb_num = n.nb_num
+			and    c.m_num = #{m_num}  
+		</select>
+		
+		<select id="ybListCart" parameterType="Member" resultType="Cart">
+			SELECT *
+			FROM
+			(
+					SELECT rownum rn, a.*
+					FROM
+								(SELECT c.nb_num, c.c_count, n.nb_title, n.nb_price, n.nb_writer, n.nb_publisher, n.nb_image  
+	                             FROM cart c, newbook n
+	                             WHERE c.nb_num = n.nb_num
+	                             and   c.m_num = #{m_num}) a
+			)
+			WHERE   rn BETWEEN #{start} and #{end}
+		</select>
+		
+		<select id="ybWishList" parameterType="Member" resultType="WishList">
+			SELECT *
+			FROM
+			(
+					SELECT rownum rn, a.*
+					FROM
+								(SELECT w.nb_num, w.w_wish, n.nb_image,  n.nb_title, n.nb_price, n.nb_writer, n.nb_publisher
+	                             FROM wishlist w, newbook n
+	                             WHERE w.nb_num = n.nb_num
+	                             and   w.m_num = #{m_num}
+	                             and   w.w_wish = 1) a
+			)
+			WHERE   rn BETWEEN #{start} and #{end}
+		</select>
+		
+	
+		<select id="ybMemberQuizList" parameterType="PointList" resultType="PointList">
+            SELECT *
+			FROM
+			(
+			        SELECT rownum rn, a.*
+			        FROM
+			                   (SELECT  q.q_title title, p.m_point point, p.a_par_pdate date1, p.p_list_type type1 
+			                    FROM    point_list p, quiz q
+			                    WHERE   p.q_num = q.q_num
+			                    AND     m_num = #{m_num}
+			                    UNION
+			                    SELECT  to_char(o.o_order_num) title, p.m_point point, p.a_par_pdate date1, p.p_list_type type1
+			                    FROM    point_list p, orderr o
+			                    WHERE   p.o_order_num = o.o_order_num
+			                    AND     p.m_num = #{m_num}
+			                    UNION
+			                    SELECT  a.a_title title,  p.m_point point, p.a_par_pdate date1, p.p_list_type type1
+			                    FROM    point_list p,attendance a
+			                    WHERE   p.a_num = a.a_num
+			                    AND     m_num = #{m_num}
+			                    UNION
+			                    SELECT  '추천인 적립' title, m_point point, a_par_pdate date1, p_list_type type1
+			                    FROM    point_list 
+			                    WHERE   m_num = #{m_num}
+			                    AND    p_list_type = 5 
+			                    UNION
+			                    SELECT  '회원가입 적립' title, m_point point, a_par_pdate date1, p_list_type type1
+			                    From    point_list 
+			                    WHERE   m_num = #{m_num}
+			                    AND    p_list_type = 4
+			                    UNION
+			                    SELECT  '주문 차감' title, m_point point, a_par_pdate date1, p_list_type type1
+			                    From    point_list 
+			                    WHERE   m_num = #{m_num}
+			                    AND    p_list_type = 7
+			                    UNION
+			                    SELECT  '포인트 충전' title, m_point point, a_par_pdate date1, p_list_type type1
+			                    From    point_list 
+			                    WHERE   m_num = #{m_num}
+			                    AND    p_list_type = 8
+			                    ORDER BY date1 DESC
+			                    ) a
+			)
+			WHERE   rn BETWEEN #{start} and #{end}
+		</select>
+		
+		<select id="ybOldBookSellList" parameterType="OldBook" resultType="OldBook">
+			SELECT *
+			FROM
+			(
+					SELECT rownum rn, a.*
+					FROM
+								(SELECT n.nb_title, o.ob_grade, o.ob_pur_price, o.ob_sell_price, o.ob_write_date, n.nb_publisher, n.nb_writer, n.nb_image,n.nb_num, 
+								ob_status, o.ob_num , TO_CHAR(o.ob_report_date,'YYYY-MM-DD') AS ob_report_date	
+								 FROM   newbook n, oldbook o
+							     WHERE  n.nb_num = o.nb_num
+								 AND    m_num = #{m_num}) a
+								 ORDER BY ob_write_date
+			)
+			WHERE   rn BETWEEN #{start} and #{end}
+		</select>
+		
+		<update id="ybMemberWithdraw" parameterType="Member">
+			UPDATE member SET m_wd = 1 WHERE m_num = #{m_num}
+		</update>
+		
+		<select id="ybMemberPw" parameterType="Member" resultType="String">
+			SELECT FROM member m_pw WHERE m_id = #{m_id}
+		</select>
+		
+		<select id="ybMemberChk" parameterType="String" resultType="Member">
+			SELECT * FROM member WHERE m_id = #{chk_Id}
+		</select>
+		
+		<select id="ybFindEmail" parameterType="String" resultType="Member">
+			SELECT * FROM member WHERE m_email = #{memberMail}
+		</select>
+		
+		<update id="ybMemberPwUpdate" parameterType="String">
+			UPDATE member SET m_pw = #{m_pw} WHERE m_id = #{m_id}
+		</update>
+		
+		<update id="ybMemberPwUpdate1" parameterType="map">
+			UPDATE member set m_pw = #{m_pw} WHERE m_num = #{m_num}
+		</update>
+		
+		<update id="ybMemberPwUpdate2" parameterType="map">
+			UPDATE member set m_pw = #{m_pw} WHERE m_email = #{m_email}
+		</update>
+		
+		<select id="ybMemCount" resultType="int">
+			SELECT count(*) FROM member
+		</select>
+		
+		<select id="ybMemberFindPh" parameterType="String" resultType="Member">
+			SELECT * FROM member WHERE m_ph = #{phoneHyphen}
+		</select>
+		
+		<update id="ybMemberPwChangeByPh" parameterType="map">
+			UPDATE member set m_pw = #{m_pw} WHERE m_ph = #{m_ph}
+		</update>
+
+	</mapper>
+
+

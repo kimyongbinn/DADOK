@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.OrderrMapper2">
+	<select id="htOrderTotal" parameterType="Orderr" resultType="int">
+		SELECT count(*) FROM member
+	</select>
+	
+	<select id="htOrderOne" parameterType="NewBook" resultType="NewBook">
+		 <choose>
+ 			<when test="ob_num == 0">
+ 				SELECT nb.*, #{c_count} AS c_count, #{c_count} AS quantity
+				FROM   newbook nb
+				WHERE  nb.nb_num = #{nb_num}
+  			</when>
+	        <otherwise>
+                SELECT   ob.ob_num, ob.OB_SELL_PRICE, ob.ob_grade, nb.*, 1 as quantity, 1 as c_count
+                FROM     OldBook ob, NewBook nb
+                WHERE    nb.nb_num = ob.nb_num
+                AND      ob.ob_num = #{ob_num}
+            </otherwise>
+         </choose>
+	</select>
+
+	
+	<select id="htOrderList" parameterType="Cart" resultType="Cart">
+		SELECT c.*, n.nb_title, n.nb_price, n.nb_image, n.nb_publisher, (SELECT SUM(C_COUNT)
+																		 FROM cart
+																		 WHERE m_num = 1022) as quantity
+		FROM   cart c, newbook n
+		WHERE  c.nb_num = n.nb_num
+		AND    m_num = #{m_num}
+	</select>
+	 
+	<select id="htOrderInsert" statementType="CALLABLE" parameterType="Orderr" >
+		{ 
+			call Insert_order_detail(
+					#{m_num         , mode=IN   , jdbcType=INTEGER}
+				   ,#{o_pay_price   , mode=IN   , jdbcType=INTEGER}
+				   ,#{o_pay_type    , mode=IN   , jdbcType=INTEGER}
+				   ,#{o_deliv_price , mode=IN   , jdbcType=INTEGER}
+				   ,#{o_point       , mode=IN   , jdbcType=INTEGER}
+				   ,#{o_rec_name    , mode=IN   , jdbcType=VARCHAR}
+				   ,#{o_rec_mail    , mode=IN   , jdbcType=VARCHAR}
+				   ,#{o_rec_ph      , mode=IN   , jdbcType=VARCHAR}
+				   ,#{o_rec_addr    , mode=IN   , jdbcType=VARCHAR}
+				   ,#{o_rec_msg     , mode=IN   , jdbcType=VARCHAR}
+				   ,#{o_order_num   , mode=OUT  , jdbcType=NUMERIC}
+			)
+		}
+	</select>
+	
+	<insert id="htOrderDetailInsert" parameterType="java.util.Map" >
+	    <foreach collection="list" item="item" separator=" " open="INSERT ALL" close="SELECT * FROM DUAL">
+			INTO order_detail (
+							  O_ORDER_NUM,
+							  NB_NUM,
+							  O_DE_COUNT,
+							  O_DE_PRODTYPE
+							 )
+					VALUES 	(
+				             #{orderr.o_order_num}
+				            ,#{item.nb_num}
+				            ,#{item.c_count}
+				            ,1
+				            )
+	   </foreach>
+	</insert>
+	
+	<insert id="htOrderDetailInsertOld" parameterType="java.util.Map" >
+	    <foreach collection="list" item="item" separator=" " open="INSERT ALL" close="SELECT * FROM DUAL">
+			INTO order_detail (
+							  O_ORDER_NUM,
+							  NB_NUM,
+							  O_DE_COUNT,
+							  O_DE_PRODTYPE
+							 )
+					VALUES 	(
+				             #{orderr.o_order_num}
+				            ,#{item.ob_num}
+				            ,1
+				            ,1
+				            )
+	   </foreach>
+	</insert>
+	
+	<update id="htMemberPointUpdate" parameterType="Ka">
+		UPDATE member a
+		SET    a.m_point  = (
+			                 SELECT (aa.m_point + (#{amount.total}*0.01) - #{amount.point})
+			                 FROM   member aa 
+			                 WHERE  aa.m_num = #{partner_user_id}
+			                 )
+		 WHERE a.m_num = #{partner_user_id}
+	</update>
+	
+	<insert id="htPayPointInsert" parameterType="Ka">
+		INSERT INTO point_list
+		VALUES (POINTLIST_P_NUM_SEQ.nextval, #{partner_order_id}, #{partner_user_id}, null, null, sysdate, 1, (#{amount.total} * 0.01))
+	</insert>
+	
+	<insert id="htUsePointInsert" parameterType="Ka">
+		INSERT INTO point_list
+		VALUES (POINTLIST_P_NUM_SEQ.nextval, #{partner_order_id}, #{partner_user_id}, null, null, sysdate, 6, - #{amount.point})
+	</insert>
+	
+	<delete id="htCartDelete" parameterType="Ka">
+		DELETE 
+		FROM   cart
+		WHERE  m_num = #{partner_user_id}
+	</delete>
+<!-- 	
+	<select id="htOrderPayment" parameterType="Orderr" resultType="Orderr">
+		SELECT *
+		FROM (   
+		    SELECT ROWNUM rn, o.*, od.nb_num, od.o_de_count, od.O_DE_PRODTYPE, nb.nb_title, (SELECT COUNT(*) 
+		                                                FROM  Order_detail od_sub
+		                                                WHERE od_sub.o_order_num = #{o_order_num}
+		                                                ) as o_order_count
+		    FROM   Orderr o, Order_detail od, NewBook nb
+		    WHERE  o.o_order_num  = od.o_order_num
+		    AND    od.nb_num      = nb.nb_num
+		    AND    o.o_order_num  = #{o_order_num}
+		    )
+		WHERE rn = 1 
+	</select>
+	  -->
+	<update id="htOrderUpdate" parameterType="Ka">
+		UPDATE orderr
+		<choose>
+			<when test="payment_method_type == 'MONEY'">
+				  SET  o_status = 1
+ 			</when>
+			<when test="payment_method_type == 'CARD'">
+				  SET  o_status = 1,
+				  	   o_card_num = #{card_info.approved_id}
+ 			</when>
+        </choose>
+		WHERE o_order_num   = #{partner_order_id}
+	</update>
+	
+		
+<!-- 	
+	<update id="htOrderUpdate" parameterType="Ka">
+		UPDATE orderr
+		SET    o_status      = 1,
+			   O_DELIV_COM   = TO_NUMBER(DBMS_RANDOM.VALUE * 4 + 1), 1에서 5까지의 난수 생성
+  			   O_DELIV_TRACK = TO_NUMBER(DBMS_RANDOM.VALUE * 9000000000000000 + 1000000000000000) 16자리 난수 생성
+		 WHERE o_order_num   = #{partner_order_id}
+	</update>
+	 -->
+		
+	<select id="htMemberSelect" parameterType="Member" resultType="Member">
+		SELECT *
+		FROM   member
+		WHERE  m_num = #{m_num}
+	</select>
+	
+	<select id="htNbNumSelect" parameterType="Ka" resultType="Orderr">
+		SELECT od.nb_num 
+		FROM   orderr o, order_detail od
+		WHERE  o.o_order_num = od.o_order_num
+		AND    o.o_order_num = #{partner_order_id}
+	</select>
+	
+	<update id="htOldBookUpdate" parameterType="Ka">
+		UPDATE oldbook
+		SET    ob_status = 4
+		WHERE  ob_num = #{green_deposit}
+	</update>
+</mapper>

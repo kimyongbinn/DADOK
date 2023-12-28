@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+	<mapper namespace="com.choongang.s202350103.CommHeartMapper">
+		<insert id="ybCommHeartInsert" parameterType="CommHeart">
+			INSERT INTO CommHeart values 
+			(#{cm_num}, #{m_num}, 1)
+		</insert>
+		
+		<select id="ybConfirmHeart" parameterType="CommHeart" resultType="CommHeart">
+			SELECT * 
+			FROM   commHeart
+			WHERE  cm_num = #{cm_num}
+			AND    m_num = #{m_num}
+		</select>
+		
+		<update id="ybCommHeartUpdate" parameterType="CommHeart">
+			UPDATE commHeart
+			SET    h_status = #{h_status}
+			WHERE  cm_num = #{cm_num}
+			AND    m_num = #{m_num}
+			
+		</update>
+		
+		<update id="ybUpdateHitCnt" parameterType="Community">
+			UPDATE community
+			SET    cm_hitCnt = #{cm_hitCnt}
+			WHERE  cm_num = #{cm_num}
+		</update>
+	</mapper>

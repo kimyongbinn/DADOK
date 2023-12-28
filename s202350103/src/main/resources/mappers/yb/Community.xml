@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+	<mapper namespace="com.choongang.s202350103.CommunityMapper">
+		<select id="ybSearchListBook" parameterType="NewBook" resultType="NewBook">
+				SELECT *
+				FROM
+				(
+						SELECT rownum rn, a.*
+						FROM
+								(select * from newbook 
+								<choose>
+									<when test="search_type == 'nb_title'">
+									   WHERE nb_title Like '%' || #{search_keyword} || '%'
+									</when>
+									<when test="search_type == 'nb_writer'">
+										WHERE nb_writer Like '%' || #{search_keyword} || '%'
+									</when>
+									<otherwise>
+										WHERE nb_publisher like '%' || #{search_keyword} || '%'
+									</otherwise>
+								</choose>
+								) a
+				)
+				WHERE rn BETWEEN #{start} and #{end}
+		</select>
+		
+		<select id="ybBookList" parameterType="NewBook" resultType="NewBook">
+				SELECT *
+				FROM
+				(
+						SELECT rownum rn, a.*
+						FROM
+								(select * From newbook) a
+				)
+				WHERE rn BETWEEN #{start} and #{end}
+		</select>
+		
+		<select id="ybBookListCnt" parameterType="NewBook" resultType="int">
+				select count(*) from newbook
+		</select>
+		
+		<select id="ybSearchBookCnt" parameterType="NewBook" resultType="int">
+
+						select count(*) from newbook
+						 
+						<choose>
+							<when test="search_type == 'nb_title'">
+							   WHERE nb_title Like '%' || #{search_keyword} || '%'
+							</when>
+							<when test="search_type == 'nb_writer'">
+								WHERE nb_writer Like '%' || #{search_keyword} || '%'
+							</when>
+							<when test="search_type == 'nb_publisher'">
+								WHERE nb_publisher like '%' || #{search_keyword} || '%'
+							</when>
+						</choose>
+		</select>
+		
+		<insert id="ybCommunityInsert" parameterType="Community">
+			INSERT INTO community values 
+			(COMMUNITY_CM_NUM_SEQ.nextval, #{m_num}, #{nb_num}, #{cm_title}, #{cm_content}, 0, 0, #{cm_rating}, #{cm_image}, sysdate, #{cm_image1}, #{cm_image2})
+		</insert>
+		
+		<select id="ybCommnuityList"  resultType="Community">
+			SELECT *
+			FROM
+			(
+					SELECT rownum rn, a.*
+					FROM
+								(SELECT  cm.*, nb.nb_title, nb.nb_writer, nb.nb_publisher, m.m_name
+	                           	 FROM   community cm, newbook nb, member m
+                                 WHERE  cm.nb_num = nb.nb_num
+                                 AND    m.m_num = cm.m_num
+                                 ORDER by cm_regdate desc
+	                             )a
+								)
+			WHERE   rn BETWEEN #{start} and #{end}
+
+		</select>
+		
+		<select id="ybPopularList"  resultType="Community">
+			 SELECT *
+			FROM
+			(
+					SELECT rownum rn, a.*
+					FROM
+								(SELECT  cm.*, nb.nb_title, nb.nb_writer, nb.nb_publisher, m.m_name
+	                           	 FROM   community cm, newbook nb, member m
+                                 WHERE  cm.nb_num = nb.nb_num
+                                 AND    m.m_num = cm.m_num
+                                 ORDER by cm_hitCnt desc
+	                             )a
+								)
+			WHERE   rn BETWEEN 1 and 3
+		</select>
+		
+		<select id="ybCommunityMyList"  resultType="Community">
+			SELECT *
+			FROM
+			(
+					SELECT rownum rn, a.*
+					FROM
+								(SELECT  cm.*, nb.nb_title, nb.nb_writer, nb.nb_publisher, m.m_name
+	                           	 FROM   community cm, newbook nb, member m
+                                 WHERE  cm.nb_num = nb.nb_num
+                                 AND    m.m_num = cm.m_num
+                                 AND    cm.m_num = #{m_num}
+                                 ORDER by cm_regdate desc
+	                             )a
+								)
+			WHERE   rn BETWEEN #{start} and #{end}
+			
+		</select>
+		
+		<select id="comListTotalCnt"  resultType="int">
+		
+			SELECT  count(*)
+	        FROM 	 community                
+		</select>
+		
+		<select id="ybComListTotalCnt"  resultType="int">
+			SELECT  count(*)
+	        FROM 	community       
+	        WHERE 	m_num = #{m_num}
+		</select>
+		
+		<select id="ybSelectBookDetail" parameterType="int" resultType="Community">
+			SELECT cm.*, nb.nb_title, nb.nb_writer, nb.nb_publisher, m.m_name
+			FROM   community cm, newbook nb, member m
+			WHERE  cm.nb_num = nb.nb_num
+			AND    m.m_num = cm.m_num
+			AND    cm.cm_num = #{cm_num}
+		</select>
+		
+		<select id="ybSameDetailList" parameterType="int" resultType="Community">
+			SELECT cm.*, nb.nb_title, nb.nb_writer, nb.nb_publisher, m.m_name
+			From  community cm, newbook nb, member m
+			where cm.nb_num = nb.nb_num
+            and   m.m_num = cm.m_num
+			and   cm.nb_num = #{nb_num}
+		</select>
+		
+		<update id="ybReadCntUp" parameterType="int">
+			UPDATE 	Community 
+			SET 	cm_readCnt = cm_readCnt + 1 
+			WHERE 	cm_num = #{cm_num}
+		</update>
+		
+		<update id="ybCommunityUpdateDo" parameterType="Community">
+			UPDATE Community
+			SET    cm_title = #{cm_title}, cm_content = #{cm_content}, cm_rating = #{cm_rating}, cm_regDate = sysdate, cm_image1 = #{cm_image1}, cm_image2 = #{cm_image2}
+			WHERE  cm_num = #{cm_num}
+		</update>
+		
+		<update id="ybCommunityHitPush" parameterType="int">
+			UPDATE Community
+			SET    cm_hitCnt = cm_hitCnt + 1
+			WHERE  cm_num = #{cm_num}
+		</update>
+		
+		<delete id="ybCommunityDelete" parameterType="int">
+			DELETE FROM Community
+			WHERE  cm_num = #{cm_num}
+		</delete>
+		
+		<update id="ybDeleteImage" parameterType="int">
+			UPDATE Community
+			SET    cm_image1 = null
+			WHERE  cm_num = #{cm_num}
+		</update>
+		
+		<update id="ybDeleteImage1" parameterType="int">
+			UPDATE Community
+			SET    cm_image2 = null
+			WHERE  cm_num = #{cm_num}
+		</update>
+		
+	</mapper>

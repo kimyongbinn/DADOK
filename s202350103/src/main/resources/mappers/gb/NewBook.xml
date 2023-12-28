@@ -1,0 +1,551 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.NewBookMapper"> 
+	
+	<!-- 전체 도서 개수 및 리스트-->
+	<select id="gbSelectInNbCnt" parameterType="NewBook" resultType="int">
+		SELECT count(*) 
+		FROM newbook 
+		<choose>
+            <when test="nb_category1 == 1">
+                WHERE nb_category1 = 1
+            </when>
+            <when test="nb_category1 == 2">
+                WHERE nb_category1 = 2
+            </when>
+        </choose>
+		<choose>
+            <when test="nb_category2 == 1">
+                AND nb_category2 = 1
+            </when>
+            <when test="nb_category2 == 2">
+                AND nb_category2 = 2
+            </when>
+            <when test="nb_category2 == 3">
+                AND nb_category2 = 3
+            </when>
+            <when test="nb_category2 == 4">
+                AND nb_category2 = 4
+            </when>
+            <when test="nb_category2 == 5">
+                AND nb_category2 = 5
+            </when>
+            <when test="nb_category2 == 6">
+                AND nb_category2 = 6
+            </when>
+            <when test="nb_category2 == 7">
+                AND nb_category2 = 7
+            </when>
+        </choose>
+	</select>
+	
+	<select id="gbSearchSelectInNbCnt" parameterType="NewBook" resultType="int">
+		SELECT count(*) 
+		FROM (
+		        SELECT nb_num, nb_title, nb_writer, nb_publisher, nb_category1, nb_category2
+		        FROM newbook
+		        UNION
+		        SELECT ob_num nb_num, nb_title, nb_writer, nb_publisher, nb_category1, nb_category2
+		        FROM newbook nb, oldbook ob
+		        WHERE nb.nb_num = ob.nb_num 
+		     ) allb
+		<choose>
+            <when test="search_type == 'title'">
+                WHERE allb.nb_title LIKE '%' || #{search_keyword} || '%'
+            </when>
+            <when test="search_type == 'writer'">
+                WHERE allb.nb_writer LIKE '%' || #{search_keyword} || '%'
+            </when>
+            <when test="search_type == 'publisher'">
+               WHERE allb.nb_publisher LIKE '%' || #{search_keyword} || '%'
+            </when>
+        </choose> 
+		<choose>
+            <when test="nb_category2 == 1">
+                AND allb.nb_category2 = 1
+            </when>
+            <when test="nb_category2 == 2">
+                AND allb.nb_category2 = 2
+            </when>
+            <when test="nb_category2 == 3">
+                AND allb.nb_category2 = 3
+            </when>
+            <when test="nb_category2 == 4">
+                AND allb.nb_category2 = 4
+            </when>
+            <when test="nb_category2 == 5">
+                AND allb.nb_category2 = 5
+            </when>
+            <when test="nb_category2 == 6">
+                AND allb.nb_category2 = 6
+            </when>
+            <when test="nb_category2 == 7">
+                AND allb.nb_category2 = 7
+            </when>
+        </choose>
+	</select>
+	
+	<select id="gbSelectInNbList" parameterType="NewBook" resultType="NewBook">
+		SELECT nb_num, nb_title, nb_price, nb_writer, nb_publisher, TO_CHAR(nb_publi_date, 'YYYY-MM-DD') as nb_publi_date, 
+			   nb_category1, nb_category2, nb_readcnt, nb_register_date, nb_image, reviewCnt, r_ratingAvg, <if test="#{m_num}!=null">w_wish</if>
+		FROM (
+		    SELECT rownum rn, nbre.*
+		    FROM(
+		    	<choose>
+		    		<when test="#{m_num} != null">
+		    			SELECT a1.*, NVL(w.w_wish,0) w_wish
+						FROM 	(SELECT nb.*, NVL(re.reviewCnt,0) reviewCnt, NVL(re.r_ratingAvg, 0) r_ratingAvg
+					            FROM NEWBOOK nb, (
+					                                SELECT nb.nb_num, COUNT(*) reviewCnt, NVL(ROUND(AVG(re.r_rating)),0) r_ratingAvg
+					                                FROM newbook nb, review re
+					                                WHERE nb.nb_num = re.nb_num
+					                                GROUP BY nb.nb_num
+					                             ) re
+					            WHERE nb.nb_num = re.nb_num(+)
+					            <choose>
+						            <when test="nb_category1 == 1">
+						            	AND nb.nb_category1 = 1
+						            </when>
+						            <when test="nb_category1 == 2">
+						            	AND nb.nb_category1 = 2
+						            </when>
+						        </choose>
+					            <choose>
+					                <when test="nb_category2 == 1">
+					                    AND nb.nb_category2 = 1
+					                </when>
+					                <when test="nb_category2 == 2">
+					                    AND nb.nb_category2 = 2
+					                </when>
+					                <when test="nb_category2 == 3">
+					                    AND nb.nb_category2 = 3
+					                </when>
+					                <when test="nb_category2 == 4">
+					                    AND nb.nb_category2 = 4
+					                </when>
+					                <when test="nb_category2 == 5">
+					                    AND nb.nb_category2 = 5
+					                </when>
+					                <when test="nb_category2 == 6">
+						                AND nb_category2 = 6
+						            </when>
+						            <when test="nb_category2 == 7">
+						                AND nb_category2 = 7
+						            </when>
+					            </choose>
+					            <choose>
+					                <when test="orderType == 'recently'">
+					                    ORDER BY nb.nb_publi_date desc, nb.nb_readcnt desc
+					                </when>
+					                <when test="orderType == 'highreview'">
+					                    ORDER BY re.r_ratingAvg desc NULLS LAST, nb.nb_readcnt desc
+					                </when>
+					                <when test="orderType == 'highprice'">
+					                    ORDER BY nb.nb_price desc, nb.nb_readcnt desc
+					                </when>
+					                <when test="orderType == 'lowprice'">
+					                    ORDER BY nb.nb_price asc, nb.nb_readcnt desc
+					                </when>
+					            </choose>) a1, 
+								 (SELECT nb_num, w_wish
+							      FROM wishlist
+							      WHERE m_num = #{m_num}) w
+						WHERE a1.nb_num = w.nb_num(+)
+		    		</when>
+		    		<otherwise>
+			            SELECT nb.*, NVL(re.reviewCnt,0) reviewCnt, NVL(re.r_ratingAvg, 0) r_ratingAvg
+			            FROM NEWBOOK nb, (
+			                                SELECT nb.nb_num, COUNT(*) reviewCnt, NVL(ROUND(AVG(re.r_rating)),0) r_ratingAvg
+			                                FROM newbook nb, review re
+			                                WHERE nb.nb_num = re.nb_num
+			                                GROUP BY nb.nb_num
+			                             ) re
+			            WHERE nb.nb_num = re.nb_num(+)
+			            <choose>
+				            <when test="nb_category1 == 1">
+				            	AND nb.nb_category1 = 1
+				            </when>
+				            <when test="nb_category1 == 2">
+				            	AND nb.nb_category1 = 2
+				            </when>
+				        </choose>
+			            <choose>
+			                <when test="nb_category2 == 1">
+			                    AND nb.nb_category2 = 1
+			                </when>
+			                <when test="nb_category2 == 2">
+			                    AND nb.nb_category2 = 2
+			                </when>
+			                <when test="nb_category2 == 3">
+			                    AND nb.nb_category2 = 3
+			                </when>
+			                <when test="nb_category2 == 4">
+			                    AND nb.nb_category2 = 4
+			                </when>
+			                <when test="nb_category2 == 5">
+			                    AND nb.nb_category2 = 5
+			                </when>
+			                <when test="nb_category2 == 6">
+				                AND nb_category2 = 6
+				            </when>
+				            <when test="nb_category2 == 7">
+				                AND nb_category2 = 7
+				            </when>
+			            </choose>
+			            <choose>
+			                <when test="orderType == 'recently'">
+			                    ORDER BY nb.nb_publi_date desc, nb.nb_readcnt desc
+			                </when>
+			                <when test="orderType == 'highreview'">
+			                    ORDER BY re.r_ratingAvg desc NULLS LAST, nb.nb_readcnt desc
+			                </when>
+			                <when test="orderType == 'highprice'">
+			                    ORDER BY nb.nb_price desc, nb.nb_readcnt desc
+			                </when>
+			                <when test="orderType == 'lowprice'">
+			                    ORDER BY nb.nb_price asc, nb.nb_readcnt desc
+			                </when>
+			            </choose>
+			         </otherwise>
+		         </choose>
+		    ) nbre
+		)
+		WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+	
+	<select id="gbSelectHitNbNum" resultType="NewBook">
+		SELECT *
+		FROM newbook
+		WHERE (nb_category2, nb_readcnt) IN (
+		                        SELECT nb_category2, max(nb_readcnt)
+		                        FROM newbook
+		                        GROUP BY nb_category2
+		                    )
+	</select>
+	
+	<select id="gbSelectAllHitNbNum" resultType="NewBook">
+		SELECT *
+		FROM newbook
+		WHERE nb_readcnt IN (
+		                        SELECT max(nb_readcnt)
+		                        FROM newbook
+		                    )
+	</select>
+	
+	<select id="gbSelectSearchNbCnt" parameterType="NewBook" resultType="int">
+		SELECT count(*) 
+		FROM (
+				SELECT nb_num, nb_title, nb_writer, nb_publisher, nb_category2
+				FROM newbook
+				UNION ALL
+				SELECT nb.nb_num, CONCAT('[중고]', CONCAT(' ',nb.nb_title)), nb.nb_writer, nb.nb_publisher, nb_category2
+				FROM newbook nb, oldbook ob
+				WHERE nb.nb_num = ob.nb_num
+		) alltb
+		<choose>
+            <when test="search_type == 'title'">
+                WHERE alltb.nb_title LIKE '%' || #{search_keyword} || '%'
+            </when>
+            <when test="search_type == 'writer'">
+                WHERE alltb.nb_writer LIKE '%' || #{search_keyword} || '%'
+            </when>
+            <when test="search_type == 'publisher'">
+               WHERE alltb.nb_publisher LIKE '%' || #{search_keyword} || '%'
+            </when>
+        </choose>
+        <choose>
+             <when test="nb_category2 == 1">
+                 AND alltb.nb_category2 = 1
+             </when>
+             <when test="nb_category2 == 2">
+                 AND alltb.nb_category2 = 2
+             </when>
+             <when test="nb_category2 == 3">
+                 AND alltb.nb_category2 = 3
+             </when>
+             <when test="nb_category2 == 4">
+                 AND alltb.nb_category2 = 4
+             </when>
+             <when test="nb_category2 == 5">
+                 AND alltb.nb_category2 = 5
+             </when>
+             <when test="nb_category2 == 6">
+                AND nb_category2 = 6
+            </when>
+            <when test="nb_category2 == 7">
+                AND nb_category2 = 7
+            </when>
+         </choose>
+	</select>
+	
+	<select id="gbSelectSearchBList" parameterType="NewBook" resultType="NewBook">
+		SELECT nb_num, nb_title, nb_price, nb_writer, nb_publisher, TO_CHAR(nb_publi_date, 'YYYY-MM-DD') as nb_publi_date, 
+			   nb_category1, nb_category2, nb_image, reviewCnt, r_ratingAvg, <if test="#{m_num}!=null">w_wish</if>
+		FROM (
+			    SELECT rownum rn, allre.*
+			    FROM(
+			    		<choose>
+				    		<when test="#{m_num} != null">
+				    			SELECT a1.*, NVL(w.w_wish,0) w_wish
+				    			FROM (
+							            SELECT alltb.*, NVL(re.reviewCnt,0) reviewCnt, NVL(re.r_ratingAvg, 0) r_ratingAvg
+							            FROM (
+											    SELECT nb_num, nb_title, nb_price, nb_writer, nb_publisher, nb_publi_date, nb_category1, nb_category2, nb_image
+											    FROM newbook
+											    UNION ALL
+											    SELECT ob.ob_num nb_num, CONCAT(ob_grade_alpha(ob.ob_grade),nb.nb_title), ob.ob_sell_price nb_pirce, nb_writer, nb_publisher, nb_publi_date, nb_category1, nb_category2, nb_image
+											    FROM newbook nb, oldbook ob
+											    WHERE nb.nb_num = ob.nb_num
+											    AND ob.ob_status = 3
+											)alltb ,
+					           				(
+					                            SELECT nb.nb_num, COUNT(*) reviewCnt, NVL(ROUND(AVG(re.r_rating)),0) r_ratingAvg
+					                            FROM newbook nb, review re
+					                            WHERE nb.nb_num = re.nb_num
+					                            GROUP BY nb.nb_num
+					                         ) re
+							            WHERE alltb.nb_num = re.nb_num(+)
+							            <choose>
+								            <when test="search_type == 'title'">
+								                AND alltb.nb_title LIKE '%' || #{search_keyword} || '%'
+								            </when>
+								            <when test="search_type == 'writer'">
+								                AND alltb.nb_writer LIKE '%' || #{search_keyword} || '%'
+								            </when>
+								            <when test="search_type == 'publisher'">
+								               AND alltb.nb_publisher LIKE '%' || #{search_keyword} || '%'
+								            </when>
+								        </choose>
+							            <choose>
+							                <when test="nb_category2 == 1">
+							                    AND alltb.nb_category2 = 1
+							                </when>
+							                <when test="nb_category2 == 2">
+							                    AND alltb.nb_category2 = 2
+							                </when>
+							                <when test="nb_category2 == 3">
+							                    AND alltb.nb_category2 = 3
+							                </when>
+							                <when test="nb_category2 == 4">
+							                    AND alltb.nb_category2 = 4
+							                </when>
+							                <when test="nb_category2 == 5">
+							                    AND alltb.nb_category2 = 5
+							                </when>
+							                <when test="nb_category2 == 6">
+								                AND nb_category2 = 6
+								            </when>
+								            <when test="nb_category2 == 7">
+								                AND nb_category2 = 7
+								            </when>
+							            </choose>
+							            <choose>
+							                <when test="orderType == 'recently'">
+							                    ORDER BY alltb.nb_publi_date desc
+							                </when>
+							                <when test="orderType == 'highreview'">
+							                    ORDER BY re.r_ratingAvg desc NULLS LAST
+							                </when>
+							                <when test="orderType == 'highprice'">
+							                    ORDER BY alltb.nb_price desc
+							                </when>
+							                <when test="orderType == 'lowprice'">
+							                    ORDER BY alltb.nb_price asc
+							                </when>
+							            </choose> ) a1,
+							            (SELECT nb_num, w_wish
+									     FROM wishlist
+									     WHERE m_num = #{m_num}) w
+								WHERE a1.nb_num = w.nb_num(+)
+			    		</when>
+			    		<otherwise>
+			    				SELECT alltb.*, NVL(re.reviewCnt,0) reviewCnt, NVL(re.r_ratingAvg, 0) r_ratingAvg
+					            FROM (
+									    SELECT nb_num, nb_title, nb_price, nb_writer, nb_publisher, nb_publi_date, nb_category1, nb_category2, nb_image
+									    FROM newbook
+									    UNION ALL
+									    SELECT ob.ob_num nb_num, CONCAT(ob_grade_alpha(ob.ob_grade),nb.nb_title), ob.ob_sell_price nb_pirce, nb_writer, nb_publisher, nb_publi_date, nb_category1, nb_category2, nb_image
+									    FROM newbook nb, oldbook ob
+									    WHERE nb.nb_num = ob.nb_num 
+									)alltb ,
+			           				(
+			                            SELECT nb.nb_num, COUNT(*) reviewCnt, NVL(ROUND(AVG(re.r_rating)),0) r_ratingAvg
+			                            FROM newbook nb, review re
+			                            WHERE nb.nb_num = re.nb_num
+			                            GROUP BY nb.nb_num
+			                         ) re
+					            WHERE alltb.nb_num = re.nb_num(+)
+					            <choose>
+						            <when test="search_type == 'title'">
+						                AND alltb.nb_title LIKE '%' || #{search_keyword} || '%'
+						            </when>
+						            <when test="search_type == 'writer'">
+						                AND alltb.nb_writer LIKE '%' || #{search_keyword} || '%'
+						            </when>
+						            <when test="search_type == 'publisher'">
+						               AND alltb.nb_publisher LIKE '%' || #{search_keyword} || '%'
+						            </when>
+						        </choose>
+					            <choose>
+					                <when test="nb_category2 == 1">
+					                    AND alltb.nb_category2 = 1
+					                </when>
+					                <when test="nb_category2 == 2">
+					                    AND alltb.nb_category2 = 2
+					                </when>
+					                <when test="nb_category2 == 3">
+					                    AND alltb.nb_category2 = 3
+					                </when>
+					                <when test="nb_category2 == 4">
+					                    AND alltb.nb_category2 = 4
+					                </when>
+					                <when test="nb_category2 == 5">
+					                    AND alltb.nb_category2 = 5
+					                </when>
+					                <when test="nb_category2 == 6">
+						                AND nb_category2 = 6
+						            </when>
+						            <when test="nb_category2 == 7">
+						                AND nb_category2 = 7
+						            </when>
+					            </choose>
+					            <choose>
+					                <when test="orderType == 'recently'">
+					                    ORDER BY alltb.nb_publi_date desc, alltb.nb_readcnt desc
+					                </when>
+					                <when test="orderType == 'highreview'">
+					                    ORDER BY re.r_ratingAvg desc NULLS LAST, alltb.nb_publi_date desc
+					                </when>
+					                <when test="orderType == 'highprice'">
+					                    ORDER BY alltb.nb_price desc, alltb.nb_readcnt desc
+					                </when>
+					                <when test="orderType == 'lowprice'">
+					                    ORDER BY alltb.nb_price asc, alltb.nb_readcnt desc
+					                </when>
+					            </choose>
+			    		</otherwise>
+		    	</choose>
+			    ) allre
+		)
+		WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+	
+	<select id="gbSelectNewBook" parameterType="NewBook" resultType="NewBook">
+		<choose>
+    		<when test="#{m_num} != null">
+    			SELECT a1.*, NVL(w.w_wish,0) w_wish
+				FROM 	(SELECT nb.*, NVL(re.reviewCnt,0) reviewCnt, NVL(re.r_ratingAvg, 0) r_ratingAvg
+			            FROM NEWBOOK nb, (
+			                                SELECT nb.nb_num, COUNT(*) reviewCnt, NVL(ROUND(AVG(re.r_rating)),0) r_ratingAvg
+			                                FROM newbook nb, review re
+			                                WHERE nb.nb_num = re.nb_num
+			                                GROUP BY nb.nb_num
+			                             ) re
+			            WHERE nb.nb_num = re.nb_num(+)
+			            AND nb.nb_num = #{nb_num}) a1,
+			            (SELECT nb_num, w_wish
+							      FROM wishlist
+							      WHERE m_num = #{m_num}) w
+				WHERE a1.nb_num = w.nb_num(+)
+			</when>
+			<otherwise>
+				SELECT nb.*, NVL(re.reviewCnt,0) reviewCnt, NVL(re.r_ratingAvg, 0) r_ratingAvg
+				FROM NEWBOOK nb, (
+				                    SELECT nb.nb_num, COUNT(*) reviewCnt, NVL(ROUND(AVG(re.r_rating)),0) r_ratingAvg
+				                    FROM newbook nb, review re
+				                    WHERE nb.nb_num = re.nb_num
+				                    GROUP BY nb.nb_num
+				                             ) re
+				WHERE nb.nb_num = re.nb_num(+)
+				AND nb.nb_num = #{nb_num}		
+			</otherwise>
+		</choose>
+	</select>
+	
+	<update id="gbUpdateReadCnt" parameterType="int">
+		UPDATE newbook
+		SET nb_readcnt = nb_readcnt+1
+		WHERE nb_num = #{nb_num}
+	</update>
+	
+	<select id="gbSelectSearchBOBList" parameterType="NewBook" resultType="NewBook">
+		SELECT nb_num, nb_title, nb_price, nb_writer, nb_publisher, TO_CHAR(nb_publi_date, 'YYYY-MM-DD') as nb_publi_date, 
+			   nb_category1, nb_category2, nb_image, nb_readcnt, nb_register_date
+		FROM (
+   				SELECT rownum rn, nb.*
+	            FROM newbook nb
+	            <choose>
+		            <when test="search_type == 'title'">
+		                WHERE nb.nb_title LIKE '%' || #{search_keyword} || '%'
+		            </when>
+		            <when test="search_type == 'writer'">
+		                WHERE nb.nb_writer LIKE '%' || #{search_keyword} || '%'
+		            </when>
+		            <when test="search_type == 'publisher'">
+		               WHERE nb.nb_publisher LIKE '%' || #{search_keyword} || '%'
+		            </when>
+		        </choose>
+			  )
+		WHERE rn BETWEEN #{start} AND #{end}
+	</select>
+	
+	<select id="gbselectBoNewBookDetail" parameterType="NewBook" resultType="NewBook">
+		SELECT * FROM newbook WHERE nb_num = #{nb_num}
+	</select>
+	
+	<update id="gbUpdateBoNewbook" parameterType="NewBook">
+		UPDATE newbook
+		SET <if test="nb_image != null">nb_image = #{nb_image},</if>
+			nb_category1 = #{nb_category1}, 
+			nb_category2 = #{nb_category2}, 
+			nb_title = #{nb_title}, 
+			nb_price = #{nb_price},
+			nb_writer = #{nb_writer},
+			nb_publisher = #{nb_publisher},
+			nb_publi_date = #{nb_publi_date},
+			nb_summary = #{nb_summary},
+			nb_isbn = #{nb_isbn},
+			nb_page = #{nb_page},
+			nb_size = #{nb_size}
+		WHERE nb_num = #{nb_num}
+	</update>
+	
+	<delete id="gbDeleteBoNewbook" parameterType="int">
+		DELETE FROM newbook
+		WHERE nb_num = #{nb_num}
+	</delete>
+	
+	<insert id="gbInsertBoNewbook" parameterType="NewBook">
+		INSERT INTO newbook VALUES(newbook_nb_num_seq.nextval, #{nb_title}, #{nb_price}, #{nb_writer}, #{nb_publisher},
+		#{nb_publi_date}, #{nb_isbn}, #{nb_page}, #{nb_size}, #{nb_category1}, #{nb_category2}, #{nb_image}, 0, sysdate, #{nb_summary})
+	</insert>
+	
+	<select id="gbSelectRecentBookList" parameterType="int" resultType="NewBook">
+		<choose>
+			<when test="book_num gt 0 and book_num lt 200000 ">
+				SELECT nb_num, nb_image, nb_title
+				FROM newbook
+				WHERE nb_num = #{book_num}
+			</when>
+			<otherwise>
+				SELECT ob.ob_num nb_num, nb.nb_image, CONCAT(ob_grade_alpha(ob.ob_grade),nb.nb_title) nb_title
+				FROM newbook nb, oldbook ob
+				WHERE nb.nb_num = ob.nb_num 
+				AND ob.ob_num = #{book_num}
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="gbReleaseNewbookList" resultType="NewBook">
+		SELECT *
+		FROM (SELECT rownum rn, nb.*
+		      FROM (SELECT *
+		            FROM newbook
+		            ORDER BY nb_publi_date desc) nb
+						)
+		WHERE rn BETWEEN 1 AND 5
+	</select>
+	
+</mapper>

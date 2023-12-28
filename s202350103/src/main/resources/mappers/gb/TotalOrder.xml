@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.TotalOrderMapper">
+
+	<resultMap id="TotalOrderVO" type="TotalOrder">
+		<result property = "order_cnt" column="cnt1" />
+	</resultMap>
+	
+	
+	<select id="gbSelectMonthTotalIncome" resultType="int">
+		SELECT sum (o_pay_price)  
+		FROM orderr
+		WHERE SUBSTR(o_order_date,0,8) BETWEEN (TRUNC(SYSDATE, 'mm')) AND (LAST_DAY(TRUNC(SYSDATE)))
+		AND o_status = 1
+	</select>
+	
+	<select id="gbSelectMonthTotalCnt" resultType="int">
+		SELECT count(o_order_num)  
+		FROM orderr
+		WHERE SUBSTR(o_order_date,0,8) BETWEEN (TRUNC(SYSDATE, 'mm')) AND (LAST_DAY(TRUNC(SYSDATE)))
+		AND o_status = 1
+	</select>
+	
+	<select id="gbSelectMonthTotalNewMember" resultType="int">
+		SELECT count(m_num)  
+		FROM member
+		WHERE SUBSTR(m_date,0,8) BETWEEN (TRUNC(SYSDATE, 'mm')) AND (LAST_DAY(TRUNC(SYSDATE)))
+	</select>
+	
+	<select id="gbSelectLastTotalIncome" resultType="int">
+		SELECT sum (o_pay_price)  
+		FROM orderr
+		WHERE SUBSTR(o_order_date,0,8) BETWEEN (ADD_MONTHS(TRUNC(SYSDATE, 'mm'), -1)) AND (TRUNC(SYSDATE, 'mm') - 1)
+		AND o_status = 1
+	</select>
+	
+	<select id="gbSelectLastTotalCnt" resultType="int">
+		SELECT count(o_order_num)  
+		FROM orderr
+		WHERE SUBSTR(o_order_date,0,8) BETWEEN (ADD_MONTHS(TRUNC(SYSDATE, 'mm'), -1)) AND (TRUNC(SYSDATE, 'mm') - 1)
+		AND o_status = 1
+	</select>
+	
+	<select id="gbSelectLastTotalNewMember" resultType="int">
+		SELECT count(m_num)  
+		FROM member
+		WHERE SUBSTR(m_date,0,8) BETWEEN (ADD_MONTHS(TRUNC(SYSDATE, 'mm'), -1)) AND (TRUNC(SYSDATE, 'mm') - 1)
+	</select>
+	
+	
+	<select id="gbSelectYearOrderCnt" statementType="CALLABLE" parameterType="java.util.Map">
+		call cur_mon_order_cnt(
+			#{order_cnt_list, mode=OUT, jdbcType=CURSOR, 
+						 javaType  = java.sql.ResultSet, 
+						 resultMap = TotalOrderVO}
+		)
+	</select>
+	
+	<select id="gbSelectYearReturnCnt" statementType="CALLABLE" parameterType="java.util.Map">
+		call cur_mon_return_cnt(
+			#{order_return_list, mode=OUT, jdbcType=CURSOR, 
+						 javaType  = java.sql.ResultSet, 
+						 resultMap = TotalOrderVO}
+		)
+	</select>
+</mapper>

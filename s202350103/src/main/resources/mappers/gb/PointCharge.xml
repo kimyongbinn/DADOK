@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.PointChargeMapper"> 
+
+	<insert id="gbInsertPointCharge" parameterType="Ka">
+		INSERT INTO point_list(p_num, m_num, a_par_pdate, p_list_type, m_point)
+		VALUES(pointlist_p_num_seq.nextval, #{partner_order_id}, sysdate, 8, #{amount.total})
+	</insert>
+	
+	<update id="gbUpdateMemberPoint" parameterType="Ka">
+		UPDATE member
+		SET m_point = m_point + #{amount.total}
+		WHERE m_num = #{partner_order_id}
+	</update>
+</mapper>

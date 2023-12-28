@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.CartMapper"> 
+
+	<insert id="gbInsertCart" parameterType="Cart">
+		MERGE INTO cart
+		USING dual
+		ON (m_num = #{m_num} AND nb_num = #{nb_num})
+		WHEN NOT MATCHED THEN
+		      INSERT (m_num, nb_num, c_count)
+		      <choose>
+		      	<when test="c_count!=0">
+		      		VALUES (#{m_num}, #{nb_num}, #{c_count})
+		      	</when>
+		      	<otherwise>
+		      		VALUES (#{m_num}, #{nb_num}, 1)
+		      	</otherwise>
+		      </choose>
+		      
+	</insert>
+	
+	<update id="gbUpdateCartCount" parameterType="Cart">
+		UPDATE cart
+		SET c_count = #{c_count}
+		WHERE m_num = #{m_num}
+		AND	  nb_num = #{nb_num}
+	</update>
+	
+	<delete id="gbDeleteCart" parameterType="Cart">
+		DELETE FROM cart
+		WHERE m_num = #{m_num}
+		AND nb_num = #{nb_num}
+	</delete>
+	
+</mapper>

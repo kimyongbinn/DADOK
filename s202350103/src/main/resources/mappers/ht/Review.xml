@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.ReviewMapper">
+	<insert id="htReviewInsert" parameterType="Review">
+		Insert into Review values(
+								  #{o_order_num},
+								  (
+								  	SELECT od.nb_num 
+									FROM  
+									      Order_detail od,
+									      Orderr o
+									WHERE o.o_order_num  = od.o_order_num
+									AND   o.o_order_num  = #{o_order_num}
+									AND   od.nb_num      = #{nb_num}
+								   ),
+								  #{r_title},
+								  #{r_content},
+								  CURRENT_TIMESTAMP,
+								  #{r_rating}
+								  )
+	</insert>
+	
+	<select id="htReviewTotal" parameterType="Review" resultType="int">
+		SELECT count(*) 
+		FROM   Review
+		WHERE  nb_num = ${nb_num}
+	</select>
+	
+	
+	<select id="htReviewRating" parameterType="Review" resultType="int">
+		SELECT count(*) 
+		FROM   Review 
+		Where  r_rating = #{r_rating}
+		AND    nb_num = ${nb_num}
+	</select>	
+	
+	
+	<select id="htReviewAverage" parameterType="Review" resultType="double">
+		SELECT ROUND(AVG(r_rating),0) 
+		FROM   review
+		WHERE  nb_num = ${nb_num}
+	</select>	
+	
+	
+	<select id="htReviewList" parameterType="Review" resultType="Review">
+		SELECT *
+		FROM
+		(
+			SELECT rownum rn , a.*
+			FROM
+                (SELECT r.*, m.m_name, m.m_image
+                 FROM 
+					 Review r	
+                    ,orderr o
+                    ,member m
+                    ,newbook nb
+                 Where   r.o_order_num = o.o_order_num
+                 AND     o.m_num = m.m_num
+                 AND     r.nb_num = nb.nb_num
+                 AND     nb.nb_num = #{nb_num}
+                
+                 <choose>
+		 			<when test="r_reviewSelect == 1">
+		 				  order by r_create_date DESC
+		  			</when>
+		 			<when test="r_reviewSelect == 2">
+		 				  order by r_rating DESC, r_create_date DESC
+		  			</when>
+			        <otherwise>
+		                  order by r_create_date DESC
+		            </otherwise>
+		         </choose>
+                 ) a
+		)
+		WHERE rn BETWEEN 1 and #{end}
+	</select>
+	
+	<select id="htMyReviewList" parameterType="Orderr" resultType="Orderr">
+		SELECT *
+		FROM
+		(
+		    SELECT rownum rn, a.*
+		    FROM
+		       (SELECT o.*, n.nb_num, n.nb_title, n.nb_image, o_de_count
+		        FROM   orderr        o,
+		               newbook       n,
+		               order_detail  od
+		        WHERE  o.o_order_num = od.o_order_num
+		        AND    od.nb_num     = n.nb_num
+		        AND    o.m_num       = #{m_num}
+		        AND    o.o_status    IN (3, 4) 
+		        AND    NOT EXISTS (
+                                    SELECT 1
+                                    FROM review r
+                                    WHERE r.o_order_num = o.o_order_num
+                                    AND r.nb_num = n.nb_num
+                                  )
+		        order by o_order_date DESC
+		        )a
+		)
+		WHERE rn BETWEEN #{start} and #{end}
+	 </select>
+	 
+	<select id="htMyReviewCnt" parameterType="Orderr" resultType="int">
+		    SELECT count(*)
+		    FROM
+		       (SELECT o.*, n.nb_title, n.nb_image, o_de_count
+		        FROM   orderr        o,
+		               newbook       n,
+		               order_detail  od
+		        WHERE  o.o_order_num = od.o_order_num
+		        AND    od.nb_num   = n.nb_num
+		        AND    o.m_num       = #{m_num}
+		        AND    o.o_status    IN (3, 4) 
+		        AND     NOT EXISTS (
+                                    SELECT 1
+                                    FROM review r
+                                    WHERE r.o_order_num = o.o_order_num
+                                    AND r.nb_num = n.nb_num
+                                  )
+		        order by o_order_date DESC
+		        )
+	 </select>
+	 
+	 
+	 
+	 <select id="htMyReviewedList" parameterType="Review" resultType="Review">
+		SELECT *
+		FROM
+		( 
+			SELECT rownum rn, a.*
+            FROM
+              (
+                SELECT  r.*, o.o_order_date, n.nb_title, n.nb_image, od.o_de_count
+                FROM    review        r
+                       , orderr        o
+                       , newbook       n
+                       , order_detail  od
+    
+                WHERE  r.o_order_num = o.o_order_num
+                and    o.m_num       =  #{m_num}
+                AND    r.nb_num      = n.nb_num
+                AND    r.o_order_num = od.o_order_num
+                AND    r.nb_num = od.nb_num
+                order by r_create_date DESC
+              ) a
+			
+		   )
+		 WHERE rn BETWEEN #{start} and #{end}
+	 </select>
+	 
+	 <select id="htMyReviewedCnt" parameterType="Review" resultType="int">
+		    SELECT count(*)
+			FROM   review        r,
+			       orderr        o,
+			       newbook       n,
+			       order_detail  od
+			WHERE  r.o_order_num = o.o_order_num
+            and    o.m_num       = #{m_num}
+   			AND    r.nb_num      = n.nb_num
+ 			AND    r.o_order_num = od.o_order_num
+			AND    r.nb_num = od.nb_num
+	 </select>
+	 
+	 <select id="htWritedReview" parameterType="Review" resultType="Review">
+		   SELECT r.*, nb.nb_image, nb.nb_title
+		   FROM   review r, newbook nb
+		   WHERE  r.nb_num = nb.nb_num
+		   AND    r.o_order_num = #{o_order_num}
+		   AND    r.nb_num      = #{nb_num}
+	 </select>
+	 
+	 <update id="htReviewUpdate" parameterType="Review" >
+	 	UPDATE review
+		SET
+		r_title        = #{r_title},
+		r_content      = #{r_content},
+		r_create_date  = CURRENT_TIMESTAMP,
+		r_rating       = #{r_rating}
+		
+		WHERE o_order_num = #{o_order_num}
+		AND   nb_num      = #{nb_num}
+	 </update>
+	 
+	 
+	 
+	 <delete id="htReviewDelete" parameterType="Review">
+	 	DELETE 
+		FROM   review
+		WHERE  o_order_num = #{o_order_num}
+		AND    nb_num      = #{nb_num}
+	 </delete>
+	 
+	  <select id="htReviewOne" parameterType="Review" resultType="Review">
+		   SELECT o.o_order_num, nb.nb_title, nb.nb_image
+			FROM   order_detail  od,
+			       newbook       nb,
+			       orderr        o
+			WHERE  o.o_order_num   =  od.o_order_num
+			AND    od.nb_num       =  nb.nb_num
+			AND    o.o_order_num   =  #{o_order_num}
+			AND    nb.nb_num       =  #{nb_num}
+	  </select>
+	
+</mapper>

@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.MemberMapper">
+
+	<select id="resultId" resultType="int" parameterType="String">
+		
+		select count(*) from member where m_id = #{m_id}
+	
+	</select>
+
+	<insert id="joinResult" parameterType="Member">
+	
+		insert into member    
+		values
+			( MEMBER_M_NUM_SEQ.nextval , #{m_id}, #{m_name} ,
+	 		 #{m_pw},    #{m_ph},    #{m_addr}, 
+	 		 #{m_email}, #{m_birth}, sysdate, 300, 0, 0, '../assets/images/memberImage/default2.png')
+		
+		
+	</insert>
+
+	<update id="memberJoinPoint" parameterType="String">
+		<if test="m_reid != null">
+			update member SET m_point = m_point + 500 
+			where m_id = #{m_reid}
+		</if>
+	</update>
+	
+	<insert id="memberJoinPointList" parameterType="String">
+		<if test="m_reid != null">
+			insert into point_list (p_num, m_num, a_par_pdate, p_list_type, m_point )
+			values
+				( POINTLIST_P_NUM_SEQ.nextval, (
+                    select m_num
+                    FROM   member 
+                    where  m_id = #{m_reid}
+                ), sysdate, 5, 500 )
+		</if>
+	</insert>
+	
+	<insert id="joinPoint">
+		insert into point_list (p_num, m_num, a_par_pdate, p_list_type, m_point )
+		values 
+			( POINTLIST_P_NUM_SEQ.nextval, MEMBER_M_NUM_SEQ.nextval - 1, sysdate, 4, 300 )
+	</insert>
+
+
+	<select id="memberInfo" parameterType="int" resultType="Member">
+		
+		select * from member where m_num = #{m_num}
+	
+	</select>
+	
+	<update id="memberUpdate" parameterType="Member">
+		update member SET 
+			m_image = #{m_image} ,
+			m_email = #{m_email} , 
+			m_ph = #{m_ph}, 
+			m_addr = #{m_addr}
+		 where m_num= #{m_num}
+	</update>
+	
+	
+	<select id="memberPhFind" resultType="String" parameterType="String">
+	
+		select m_ph from member where m_ph = #{m_ph}
+	
+	</select>
+	
+	<select id="memberFindGetId" resultType="Member" parameterType="String">
+	
+		select * from member where m_ph = #{m_ph}
+		
+	</select>
+	
+	
+	<select id="memberMyReview"	resultType="Member" parameterType="int">
+		
+		select o.o_order_num, m.m_num, r.nb_num, 
+   			 r.r_create_date, n.nb_image, n.nb_title, n.nb_writer,
+   			 r.r_title, r.r_content, r.r_rating
+		from orderr o 
+		join member m 
+    		on m.m_num = o.m_num
+		join review r
+		    on o.o_order_num = r.o_order_num
+		join newbook n
+		    on r.nb_num = n.nb_num
+		where m.m_num = #{m_num} 
+		order by r.r_create_date desc
+	
+	</select>
+	
+	<select id="adminMemberList" resultType="Member" parameterType="Member">
+		<![CDATA[
+			select * from 
+			(	
+				select rownum rn , m.* 
+				from 
+					(select * from member order by m_num desc) m
+			)
+			where rn >= #{start}
+			and rn <= #{end}
+		]]>
+
+	</select>
+	
+	<select id="memberMyOrder" resultType="Member" parameterType="int">
+		
+			select ord.o_order_num,
+				   ord.m_num,
+			       ord.o_order_date,
+			       ord.o_rec_name,
+			       ord.o_pay_price,
+			       ord.o_order_num,
+			       ord.o_status,
+			       ord.o_type,
+			       odbooks.nb_num,
+			       odbooks.nb_title,
+			       odbooks.nb_writer,
+			       odbooks.nb_price,
+			       odbooks.nb_image,
+			       odbooks.o_de_count  
+			from orderr ord,
+			    (select od.o_order_num,
+			            od.o_de_count,  
+			            books.nb_num,
+			            books.nb_title,
+			            books.nb_writer,
+			            books.nb_price,
+			            books.nb_image
+			    from order_detail od,
+			            (select nb_num, nb_title, nb_writer, nb_price, nb_image
+			              from newbook
+			                  union
+			              select ob.ob_num nb_num, 
+			                 concat(ob_grade_alpha(ob.ob_grade),nb.nb_title) nb_title, nb.nb_writer, ob.ob_sell_price nb_price, nb.nb_image
+			              from newbook nb, oldbook ob
+			              where nb.nb_num = ob.nb_num
+			            ) books
+			    where od.nb_num = books.nb_num) odbooks
+			where ord.o_order_num = odbooks.o_order_num
+			and ord.m_num = #{m_num} order by ord.o_order_date desc
+		
+	</select>
+	
+	<select id="totalMember" resultType="int">
+	
+		select count(*) from member
+	
+	</select>
+	
+	<select id="memberEmailFind" resultType="String" parameterType="String">
+	
+		select m_email from member where m_email = #{m_email}
+	
+	</select>
+	
+	<select id="memberFindGetIdEmail" resultType="Member" parameterType="String">
+	
+		select * from member where m_email = #{m_email}
+	
+	</select>
+	
+	<insert id="memberQInsert" parameterType="MemberQ">
+	
+		insert into memberq values 
+		(MEMBERQ_MQ_NUM_SEQ.nextval, #{m_num}, #{mq_title} , #{mq_content}, sysdate, #{mq_hidden})
+	
+	</insert>
+	
+	
+	<select id="mqCount" resultType="int">
+			
+		select count(*) from 
+		member m
+		join memberq mq
+		on m.m_num = mq.m_num	
+				
+	</select>
+	
+	
+	<select id="memberQnaList" resultType="MemberQ" parameterType="MemberQ">
+		<![CDATA[
+		select *
+		from (
+		  select rownum rn, m.*
+		  from (
+		    select  m.m_num , m.m_id,  m.m_name,  
+		            m.m_email, m.m_ph, m.m_admin ,
+		            
+		            mq.mq_num,  mq.mq_title, mq.mq_content, 
+		            mq.mq_date, mq.mq_hidden
+		            
+		    from member m
+		    join memberq mq
+		    on m.m_num = mq.m_num
+		    order by mq.mq_date desc
+		  ) m
+		)
+			where rn >= #{start}
+			and rn <= #{end}
+		]]>
+	
+	</select>
+	
+	<select id="memberQInfo" parameterType="int" resultType="MemberQ">
+		
+		select * from 
+		memberq mq
+		join member m
+		on mq.m_num = m.m_num 
+		where mq_num = #{mq_num}
+			
+	</select>
+	
+	<select id="memberMyQnaList" parameterType="int" resultType="MemberQ">
+		
+		select * from memberq where m_num = #{m_num} order by mq_date desc
+	
+	</select>
+	
+	<select id="totalOrderCnt" parameterType="int" resultType="int">
+		select count(*) from orderr where m_num = #{m_num} and o_status > 0
+	</select>
+	
+	<update id="adminMemberUpdate" parameterType="Member">
+	
+		update member set
+			 m_id = #{m_id} , m_name = #{m_name},
+		    m_email = #{m_email}, m_ph = #{m_ph}, 
+		    m_addr = #{m_addr}, m_birth = #{m_birth}, m_pw = #{m_pw},
+		    m_admin = #{m_admin} ,m_wd = #{m_wd}, m_image=#{m_image}
+		where m_num = #{m_num}
+	
+	</update>
+	
+	<delete id="myMqDelete" parameterType="int">
+		
+		delete memberq where mq_num = #{mq_num}
+		
+	</delete>
+	
+	<update id="myMqUpdate" parameterType="MemberQ">
+		
+		update memberq set mq_title = #{mq_title} , mq_content = #{mq_content} where mq_num = #{mq_num}
+	
+	</update>
+	
+	<delete id="adminMemberDelete" parameterType="int">
+
+		delete	member where m_num = #{m_num}
+
+	</delete>
+	
+	<select id="memberSearchCnt" parameterType="Member" resultType="int">
+	  select count(*) from member
+    	 	 <choose>
+		           <when test="search == 's_num'">
+		         	   where m_num like '%' || #{keyword} || '%'
+		          </when>
+		           <when test="search == 's_name'">
+		         	   where m_name like '%' || #{keyword} || '%'
+		          </when>
+		           <when test="search == 's_id'">
+		         	   where m_id like '%' || #{keyword} || '%'
+		          </when>
+		           <when test="search == 's_email'">
+		          	  where m_email like '%' || #{keyword} || '%'
+		          </when>
+		           <when test="search == 's_addr'">
+		          	  where m_addr like '%' || #{keyword} || '%'
+		          </when>
+	     	 </choose>
+	</select>
+	
+	
+	<select id="adminMemberSearch" parameterType="Member" resultType="Member">
+		
+		select *  
+		from 
+			(  
+				select rownum rn, m.* 
+				from 
+					(select * from member
+		    	 <choose>
+			           <when test="search == 's_num'">
+			             WHERE m_num like '%' || #{keyword} || '%'
+			          </when>
+			           <when test="search == 's_name'">
+			            WHERE m_name like '%' || #{keyword} || '%'
+			          </when>
+			           <when test="search == 's_id'">
+			            WHERE m_id like '%' || #{keyword} || '%'
+			          </when>
+			           <when test="search == 's_email'">
+			            WHERE m_email like '%' || #{keyword} || '%'
+			          </when>
+			           <when test="search == 's_addr'">
+			            WHERE m_addr like '%' || #{keyword} || '%'
+			          </when>
+		     	 </choose>
+	     	 ) m
+	    ) 
+	    WHERE rn BETWEEN #{start} and #{end} 	 
+	</select>
+	
+	
+	<select id="adminAddrSearch" parameterType="int" resultType="String">
+		
+		select m_addr from member where m_num = #{m_num}
+	
+	</select>
+	
+	<select id="nomalMember" resultType="int">
+		select count(*) from member where m_admin = 0
+	</select>	
+	
+	<select id="adminMember" resultType="int">
+		select count(*) from member where m_admin = 1
+	</select>
+	
+	<select id="activeMember" resultType="int">
+		select count(*) from member where m_wd = 0
+	</select>
+	
+	<select id="wdMember" resultType="int">
+		select count(*) from member where m_wd = 1
+	</select>
+	
+	
+	<select id="mqReplyList" parameterType="int" resultType="MemberQ">
+		
+		select * from 
+			memberq_reply mqr
+		join member m
+			on m.m_num = mqr.m_num
+		where mq_num = #{mq_num} 
+
+		order by 
+       	 mqr.mqr_date desc
+		
+	</select>
+	
+	<select id="replyCount" resultType="int" parameterType="int">
+	
+		select count(*) from 
+			memberq_reply mqr
+		join member m
+			on m.m_num = mqr.m_num
+		where mq_num = #{mq_num}
+	
+	</select>
+	
+	<insert id="replyInsert" parameterType="MqReply">
+		
+		insert into memberq_reply 
+        values 
+        (MEMBERQ_REPLY_MQR_NUM_SEQ.nextval, #{m_num}, #{m_num_write}, #{mq_num}, #{mqr_content}, sysdate,0, 0, 0, null)
+	
+	</insert>
+	
+	<update id="likeReply" parameterType="Long" >
+	
+		 update memberq_reply 
+		    set mqr_recomen = mqr_recomen + 1 
+	   	 where mqr_num = #{mqr_num}
+	
+	</update>
+	
+	<update id="declReply" parameterType="MqReply">
+		
+		update memberq_reply set 
+	        mqr_decl = mqr_decl +1 ,
+	        mqr_decl_val = #{mqr_decl_val}
+        where mqr_num = #{mqr_num}
+	
+	</update>
+	
+	<select id="declCount" resultType="int">
+		
+		select mqr_decl from memberq_reply 
+		where mqr_num = #{mqr_num}	
+	
+	</select>
+	
+	<delete id="deleteReply" parameterType="int">
+		delete memberq_reply where mqr_num = #{mqr_num}	
+	</delete>
+	
+	<select id="adminDeclReply" resultType="MemberQ">
+	
+		select * from 
+			memberq_reply mqr
+		join member m
+			on m.m_num = mqr.m_num
+		where mqr_decl > 0 
+		order by  
+        mqr.mqr_decl desc
+		
+	</select>
+	
+	<update id="replyUpdate" parameterType="int">
+	
+		update memberq_reply set 
+	        mqr_decl = 0 ,
+	        mqr_decl_val = 0
+        where mqr_num = #{mqr_num}
+	
+	</update>
+	
+	<select id="declReplyCount" resultType="int">
+		 select count(*) from memberq_reply where mqr_decl > 0
+	</select>
+	
+	<delete id="deleteReplyAndMQ" parameterType="int">
+		delete memberq_reply where mq_num = #{mq_num}	
+	</delete>
+	
+	<select id="memberMyReply" parameterType="int" resultType="MemberQ">
+		select * 
+			from memberq_reply mqr
+		join member m
+			on mqr.m_num = m.m_num
+		join memberq mq 
+			on mqr.mq_num = mq.mq_num
+		where mqr.m_num = #{m_num}
+		order by mqr_date desc
+	</select>
+	
+	<update id="myReplyUpdate" parameterType="MemberQ">
+		update memberq_reply 
+		set
+		mqr_content  = #{mqr_content} ,
+		mqr_date = sysdate
+		where mqr_num = #{mqr_num}
+	</update>
+	
+</mapper>

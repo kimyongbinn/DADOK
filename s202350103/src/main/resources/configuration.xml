@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config
+3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+	<typeAliases>
+		<typeAlias alias="Attendance" 		type="com.choongang.s202350103.model.Attendance"/>
+		<typeAlias alias="AttJoin" 			type="com.choongang.s202350103.model.AttJoin"/>
+		<typeAlias alias="Cart" 			type="com.choongang.s202350103.model.Cart"/>
+		<typeAlias alias="Community" 		type="com.choongang.s202350103.model.Community"/>
+		<typeAlias alias="CommHeart" 		type="com.choongang.s202350103.model.CommHeart"/>
+		<typeAlias alias="Member" 			type="com.choongang.s202350103.model.Member"/>
+		<typeAlias alias="MemberQ" 			type="com.choongang.s202350103.model.MemberQ"/>
+		<typeAlias alias="MqReply" 			type="com.choongang.s202350103.model.MqReply"/>
+		<typeAlias alias="NewBook" 			type="com.choongang.s202350103.model.NewBook"/>
+		<typeAlias alias="OldBook" 			type="com.choongang.s202350103.model.OldBook"/>
+		<typeAlias alias="OrderCancel" 		type="com.choongang.s202350103.model.OrderCancel"/>
+		<typeAlias alias="OrderDetail" 		type="com.choongang.s202350103.model.OrderDetail"/>
+		<typeAlias alias="OrderExch" 		type="com.choongang.s202350103.model.OrderExch"/>
+		<typeAlias alias="OrderGift" 		type="com.choongang.s202350103.model.OrderGift"/>
+		<typeAlias alias="Orderr" 			type="com.choongang.s202350103.model.Orderr"/>
+		<typeAlias alias="OrderReturn" 		type="com.choongang.s202350103.model.OrderReturn"/>
+		<typeAlias alias="PointList" 		type="com.choongang.s202350103.model.PointList"/>
+		<typeAlias alias="Quiz" 			type="com.choongang.s202350103.model.Quiz"/>
+		<typeAlias alias="QuizJoin" 		type="com.choongang.s202350103.model.QuizJoin"/>
+		<typeAlias alias="Refund" 			type="com.choongang.s202350103.model.Refund"/>
+		<typeAlias alias="Review" 			type="com.choongang.s202350103.model.Review"/>
+		<typeAlias alias="WishList" 		type="com.choongang.s202350103.model.WishList"/>
+		<typeAlias alias="NewBookOldBook"   type="com.choongang.s202350103.model.NewBookOldBook"/>
+		<typeAlias alias="Ka"               type="com.choongang.s202350103.domain.KakaoPayApprovalVO"/>
+		<typeAlias alias="TotalOrder"   	type="com.choongang.s202350103.model.TotalOrder"/>
+	</typeAliases>
+</configuration>

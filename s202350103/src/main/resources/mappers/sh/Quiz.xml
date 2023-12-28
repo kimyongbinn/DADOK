@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.choongang.s202350103.QuizMapper">
+	<select id="shTotalQuiz" resultType="int">
+		Select Count(*) From Quiz
+	</select>
+	
+	<select id="shQuiz" parameterType="int" resultType="Quiz">
+		Select * From quiz Where q_num = #{eNum}
+	</select>
+	
+	<insert id="shCreateQuiz" parameterType="Quiz">
+		Insert into Quiz Values (event_num_seq.nextval,#{q_title},#{q_sdate},#{q_edate},#{q_image},#{q_point},#{q_question},#{q_select1},#{q_select2},#{q_select3},#{q_select4},#{q_answer})
+	</insert>
+	
+	<update id="shUpdateQuiz" parameterType="Quiz">
+		Update Quiz 
+		Set 
+		q_title=#{q_title},
+		q_sdate=#{q_sdate},
+		q_edate=#{q_edate},
+		q_image=#{q_image},
+		q_point=#{q_point},
+		q_question=#{q_question},
+		q_select1=#{q_select1},
+		q_select2=#{q_select2},
+		q_select3=#{q_select3},
+		q_select4=#{q_select4},
+		q_answer=#{q_answer}
+		Where q_num = #{q_num}
+	</update>
+	
+	<delete id="shDeleteQuiz" parameterType="int">
+		Delete From quiz Where q_num = #{q_num}
+	</delete>
+	
+</mapper>
