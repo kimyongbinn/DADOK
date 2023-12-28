@@ -43,12 +43,6 @@
 ![image](https://github.com/kimyongbinn/DADOK/assets/42797251/4b48752e-fa46-41aa-b790-3f538f101657)
 ![image](https://github.com/kimyongbinn/DADOK/assets/42797251/40a333ac-c600-40ed-8437-6e55fe77a55c)
 
-* INTERCEPTOR
-  > 접근 권한
-![image](https://github.com/kimyongbinn/DADOK/assets/42797251/1a0583f9-7a67-4244-8577-c0a384489efe)
-![image](https://github.com/kimyongbinn/DADOK/assets/42797251/70e9ffee-a74d-4dc2-a4b5-22f913161b4f)
-![image](https://github.com/kimyongbinn/DADOK/assets/42797251/ff826a25-d546-452a-a9bc-6624c87c54a3)
-
 * 내포인트 목록
 ![image](https://github.com/kimyongbinn/DADOK/assets/42797251/90a28a5d-ee8b-4f7d-8e26-6adbce5f5a6a)
 
@@ -65,6 +59,11 @@
 ![image](https://github.com/kimyongbinn/DADOK/assets/42797251/957b8571-687d-4858-893e-0e1c12ed0e86)
 ![image](https://github.com/kimyongbinn/DADOK/assets/42797251/3e74e90c-aca2-4c18-9d77-a876481937b9)
 ![image](https://github.com/kimyongbinn/DADOK/assets/42797251/ff141d1f-ed87-4f10-92a1-48b4e99795e4)
+
+* INTERCEPTOR
+![image](https://github.com/kimyongbinn/DADOK/assets/42797251/1a0583f9-7a67-4244-8577-c0a384489efe)
+![image](https://github.com/kimyongbinn/DADOK/assets/42797251/70e9ffee-a74d-4dc2-a4b5-22f913161b4f)
+![image](https://github.com/kimyongbinn/DADOK/assets/42797251/ff826a25-d546-452a-a9bc-6624c87c54a3)
 
 # ⏰ 개발 기간
 - 2023.10.27 ~ 2023.11.29
