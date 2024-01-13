@@ -65,6 +65,21 @@
 ![image](https://github.com/kimyongbinn/DADOK/assets/42797251/70e9ffee-a74d-4dc2-a4b5-22f913161b4f)
 ![image](https://github.com/kimyongbinn/DADOK/assets/42797251/ff826a25-d546-452a-a9bc-6624c87c54a3)
 
+# 📌 작업 리뷰(4L 회고)
+- Liked (좋았던 점)
+  - 기본적인 기능(C R U D), API, Interceptor 등 다양한 기능들을 기한 내 구현
+  - 명명 규칙 설정을 통해 소통 효율 높임
+  - 정기 회의를 통한 현황 공유 및 팀원 내 피드백 수용
+- Learned (배운 점)
+  - API, Interceptor 혼자서 구현
+  - 효율적인 협업 및 소통 방식
+- Lacked (부족했던 점)
+  - 운영 서버 배포 X (로컬 서버로만 개발 및 테스트)
+  - 협업툴 활용 X
+  - 코딩의 통일성 및 남들도 이해하기 쉽게 보완 필요
+- Longed For (바라는 점)
+  - 운영 서버 배포
+  - 노션 등 협업툴 활용
 # ⏰ 개발 기간
 - 2023.10.27 ~ 2023.11.29
 
